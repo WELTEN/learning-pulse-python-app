@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+  <head>
+    <title>ALearning Pulse / Learning activity rating</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="static/favicon.ico" />
+    <link rel="icon" type="image/png" href="static/favicon.png" />
+
+    <!-- Bootstrap -->
+    <link href="static/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="static/bootstrap-slider.css" rel="stylesheet" media="screen">
+    <link href="static/bootstrap-switch.css" rel="stylesheet" media="screen">
+    <link href="static/custom.css" rel="stylesheet" media="screen">
+  </head>
+  <body>
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container"> 
+        <div id="navbar" class="">
+            <a class="navbar-brand" href="#">LearningPulse</a>
+            <a href="#" class="btn btn-info">Play</a>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-12 box-container">
+          <h2>Learning activity rating</h2>
+          <ul class="list-group">
+            {% for rating in ratings %}
+              <li class="list-group-item">Learning activity Stress {{ rating.stress }}, Productivity {{ rating.productivity }}, Activity {{ rating.activity }}</li>
+            {% endfor %}
+          </ul>
+          <form class="form-rating" action="/rate?user={{ dashboard_name }}" method="post">
+            <fieldset>
+              <p>Your Learning Activity started <span class="activityStart">TimeStart</span> to <span class="activityEnd">TimeEnd</span></p>
+              <legend class="text-center"></legend>
+              <div class="form-group">
+                <label for="productivity" class="col-lg-2 control-label">Productivity</label>
+                <div class="col-lg-10">
+                  <input id="productivity" name="productivity" data-slider-id='productivitySlider' type="text" data-slider-min="0" data-slider-max="100" data-slider-step="1" data-slider-value="14"/>
+                  <span class="help-block">How productive did you feel during the last hour?</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="stress" class="col-lg-2 control-label">Stress</label>
+                <div class="col-lg-10">
+                  <input id="stress" name="stress" data-slider-id='stressSlider' type="text" data-slider-min="0" data-slider-max="100" data-slider-step="1" data-slider-value="14"/>
+                  <span class="help-block">How stressed did you feel during the last hour?</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-lg-2 control-label">Activity</label>
+                <div class="col-lg-10">
+                  <div class="radio">
+                    <label>
+                      <input type="radio" name="activity" value="reading" checked="">
+                      Reading
+                    </label>
+                  </div>
+                  <div class="radio">
+                    <label>
+                      <input type="radio" name="activity" value="writing">
+                      Writing
+                    </label>
+                  </div>
+                  <div class="radio">
+                    <label>
+                      <input type="radio" name="activity" value="meeting">
+                      Meeting
+                    </label>
+                  </div>
+                  <div class="radio">
+                    <label>
+                      <input type="radio" name="activity"  value="other">
+                      Other
+                    </label>
+                  </div>
+                  <span class="help-block">What was your main activity in the last hour?</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="col-lg-10 col-lg-offset-2 text-right">
+                  <!--<button type="reset" class="btn btn-default">Cancel</button>-->
+                  <button type="submit" class="btn btn-primary ">Submit</button>
+                </div>
+              </div>
+            </fieldset>        
+          </form>
+        </div>
+      </div>
+      
+
+    <p class="text-center text-white"><strong>LearningPulse</strong> - Welten Institute 2015 - <a href="{{ url|safe }}">{{ url_linktext }}</a></p>
+    </div> <!-- /container -->
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script src="static/bootstrap-switch.js"></script>
+    <script src="static/bootstrap-slider.js"></script>
+    <script src="boo"></script>
+    <script type="text/javascript">
+      $('#productivity, #stress').slider({
+        formatter: function(value) {
+          return 'Value: ' + value;
+        }
+      });
+    </script>
+  </body>
+</html>
+</html>
+{% endautoescape %}

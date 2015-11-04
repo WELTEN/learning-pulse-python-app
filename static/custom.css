@@ -21,7 +21,7 @@ body {
 }
 .form-rating .form-rating-heading,
 .form-rating .checkbox {
-  margin-bottom: 10px;
+  margin-bottom: 5px;
 }
 .slider-selection {
     background:    -moz-linear-gradient(left, red, yellow, green); /* FF3.6+ */
@@ -34,4 +34,18 @@ body {
 
 .slider-tick-label { font-size:9px; }
 
-.slider-tick-label-container {margin-bottom: 10px;}
+.slider-tick-label-container {margin-bottom: 4px;}
+
+.border{
+  border-bottom:1px solid #ddd;
+  padding-bottom:20px
+  }
+.helper-block {
+  font-size:10px;
+}
+
+#timeframes-tray li .badge {
+  dbackground-color: #666;
+  float: left;
+  margin-right: 1em;
+}

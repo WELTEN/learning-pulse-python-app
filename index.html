@@ -21,50 +21,36 @@
               <img src="static/favicon.png" alt="Learning Pulse" style="width:36px; margin:3px 20px 0 0;" />
             </div>
             <a class="navbar-brand" href="#">LearningPulse</a>
-            <a href="#" class="btn btn-default" style="margin-top:8px; float:right;">Play</a>
+            <strong class="pull-right" style="margin-top:15px; float:right; color:white;">{{today}}</strong>
+            <!--<a href="#" class="btn btn-default" style="margin-top:8px; float:right;">Play</a>-->
         </div><!--/.nav-collapse -->
       </div>
     </nav>
     <div class="container">
       <div class="row">
         <div class="col-lg-12 box-container">
-          <h2>Activity Rating Tool</h2>
-          <hr>
+          <!--<h3>Activity Rating Tool</h3><hr>-->
           <div class="panel panel-default">
-            <div class="panel-heading"><strong>Timeframes rated today</strong></div>
+            <div class="panel-heading"><strong>Active timeframes {{today}}</strong></div>
             <!--<div class="panel-body">
               <p>The latest Learning Activities that you rated.</p>
             </div>-->
-            <ul class="list-group">
-              {% for rating in ratings %}
+            <ul class="list-group" id="timeframes-tray">
+              <!--{% for rating in ratings %}
               <li class="list-group-item">
-                --:-- Timeframe @number - (Stress {{ rating.stress }}, Productivity {{ rating.productivity }}, Activity {{ rating.activity }})
+                <span class="label label-default"><abbr class="timeago" title="{{rating.date}}">{{rating.date}}</abbr></span>
+                 Productivity {{ rating.productivity }}, Stress {{ rating.stress }}, Challenge {{ rating.challenge }}, Abilities {{ rating.abilities }}, Activity {{ rating.activity }}
               </li>
-              {% endfor %}
+              {% endfor %}-->
+              {{ listTimeframes|safe }}
             </ul>
           </div>
-          <div class="panel panel-default">
-            <div class="panel-heading"><strong>Rate Timeframe</strong> (started at --:--)</div>
+          <div class="panel panel-default" id="rating-form" class="">
+            <div class="panel-heading"><strong>Rate timeframe</strong> <span id="timeframe-display"></span></div>
             <div class="panel-body">
               <form class="form-rating" action="/rate?user={{ dashboard_name }}" method="post">
-                  <div class="form-group">
-                    <label for="productivity" class="col-lg-3 control-label">Productivity</label>
-                    <div class="col-lg-9">
-                      <span class="help-block">Productivity perceived in the past timeframe</span>
-                      <input id="productivity" name="productivity" data-slider-id='productivitySlider' type="text" data-slider-min="0" data-slider-max="100" data-slider-step="1" data-slider-value="14"/>
-                      <hr>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label for="stress" class="col-lg-3 control-label">Stress</label>
-                    <div class="col-lg-9">
-                      <span class="help-block">Stress perceived in the past timeframe</span>
-                      <input id="stress" name="stress" data-slider-id='stressSlider' type="text" data-slider-min="0" data-slider-max="100" data-slider-step="1" data-slider-value="14" />
-                      <hr>
-                    </div>
-                  </div>
-
-                  <div class="form-group">
+                  <input type="hidden" value="" name="timeframe" id="timeframe-input" />
+                  <div class="form-group ">
                     <label class="col-lg-3 control-label">Activity</label>
                     <div class="col-lg-9">
                       <span class="help-block">Main task in the past timeframe</span>
@@ -95,6 +81,38 @@
                     </div>
                   </div>
                   <div class="form-group">
+                    <label for="productivity" class="col-lg-3 control-label">Productivity</label>
+                    <div class="col-lg-9">
+                      <span class="help-block">Your productivity in the past timeframe</span>
+                      <input id="productivity" name="productivity" data-slider-id='productivitySlider' type="text" data-slider-min="0" data-slider-max="100" data-slider-step="1" data-slider-value="50"/>
+                      <hr>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="stress" class="col-lg-3 control-label">Stress</label>
+                    <div class="col-lg-9">
+                      <span class="help-block">Your stress in the past timeframe</span>
+                      <input id="stress" name="stress" data-slider-id='stressSlider' type="text" data-slider-min="0" data-slider-max="100" data-slider-step="1" data-slider-value="50" />
+                      <hr>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="stress" class="col-lg-3 control-label">Challenge</label>
+                    <div class="col-lg-9">
+                      <span class="help-block">Difficulty of the main activity in the past timeframe</span>
+                      <input id="challenge" name="challenge" data-slider-id='challengeSlider' type="text" data-slider-min="0" data-slider-max="100" data-slider-step="1" data-slider-value="50" />
+                      <hr>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="stress" class="col-lg-3 control-label">Abilities</label>
+                    <div class="col-lg-9">
+                      <span class="help-block">Your preparation for the main activity in the past timeframe</span>
+                      <input id="abilities" name="abilities" data-slider-id='abilitiesSlider' type="text" data-slider-min="0" data-slider-max="100" data-slider-step="1" data-slider-value="50" />
+                      <hr>
+                    </div>
+                  </div>
+                  <div class="form-group">
                     <div class="col-lg-10 col-lg-offset-2 text-right">
                       <!--<button type="reset" class="btn btn-default">Cancel</button>-->
                       <button type="submit" class="btn btn-primary ">Submit</button>
@@ -112,9 +130,8 @@
     <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
     <script src="static/bootstrap-switch.js"></script>
     <script src="static/bootstrap-slider.js"></script>
-    <script src="boo"></script>
     <script type="text/javascript">
-      $('#productivity, #stress').slider({
+      $('#productivity, #stress, #challenge, #abilities').slider({
         formatter: function(value) {
           return value + '%';
         },
@@ -123,6 +140,16 @@
         ticks_snap_bounds: 2
 
       });
+      $('.timeframe-rating').click(function(e){ 
+        var tf = $(this).attr("href").replace("#","");
+        var tf1 = 1+parseInt(tf,10)
+        var tfbadge = "<span class='badge'>"+tf+" - "+tf1+"</span>";
+        $("#timeframe-display").html(tfbadge);
+        $("#timeframe-input").attr("value",tf);
+        $("#rating-form").toggle();
+        e.preventDefault();
+      });
+       $("#rating-form").hide();
     </script>
   </body>
 </html>

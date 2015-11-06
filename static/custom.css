@@ -44,7 +44,7 @@ body {
   font-size:10px;
 }
 
-#timeframes-tray li .badge {
+#timeframes-tray a .badge {
   dbackground-color: #666;
   float: left;
   margin-right: 1em;

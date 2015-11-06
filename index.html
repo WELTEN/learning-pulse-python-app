@@ -12,6 +12,7 @@
     <link href="static/bootstrap-slider.css" rel="stylesheet" media="screen">
     <link href="static/bootstrap-switch.css" rel="stylesheet" media="screen">
     <link href="static/custom.css" rel="stylesheet" media="screen">
+    <script src='//cdn.goroost.com/roostjs/kuypylxkqrk0q5izfwxqi23mvrbtsxos' async></script>
   </head>
   <body>
     <nav class="navbar navbar-default navbar-fixed-top">
@@ -35,7 +36,7 @@
             <!--<div class="panel-body">
               <p>The latest Learning Activities that you rated.</p>
             </div>-->
-            <ul class="list-group" id="timeframes-tray">
+            <div class="list-group" id="timeframes-tray">
               <!--{% for rating in ratings %}
               <li class="list-group-item">
                 <span class="label label-default"><abbr class="timeago" title="{{rating.date}}">{{rating.date}}</abbr></span>
@@ -43,7 +44,7 @@
               </li>
               {% endfor %}-->
               {{ listTimeframes|safe }}
-            </ul>
+            </div>
           </div>
           <div class="panel panel-default" id="rating-form" class="">
             <div class="panel-heading"><strong>Rate timeframe</strong> <span id="timeframe-display"></span></div>

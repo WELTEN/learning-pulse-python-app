@@ -11,6 +11,11 @@ indexes:
 # your application using appcfg.py.
 
 - kind: Rating
+  properties:
+  - name: timeframe
+  - name: date
+
+- kind: Rating
   ancestor: yes
   properties:
   - name: date
@@ -20,3 +25,9 @@ indexes:
   properties:
   - name: date
     direction: desc
+
+- kind: Rating
+  ancestor: yes
+  properties:
+  - name: timeframe
+  - name: date

@@ -47,7 +47,8 @@
     <script type="text/javascript">
       var chart = c3.generate({
           data: {
-              columns: [{{dailychart}}],
+              x: 'x',
+              columns: [{{chart_data|safe}}],
               type: 'spline'
           }
       });

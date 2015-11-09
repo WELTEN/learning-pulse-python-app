@@ -6,13 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="static/favicon.ico" />
     <link rel="icon" type="image/png" href="static/favicon.png" />
+    <link rel="manifest" href="static/manifest.json" />
 
     <!-- Bootstrap -->
     <link href="static/bootstrap.min.css" rel="stylesheet" media="screen">
     <link href="static/bootstrap-slider.css" rel="stylesheet" media="screen">
     <link href="static/bootstrap-switch.css" rel="stylesheet" media="screen">
     <link href="static/custom.css" rel="stylesheet" media="screen">
-    <script src='//cdn.goroost.com/roostjs/kuypylxkqrk0q5izfwxqi23mvrbtsxos' async></script>
+    <!-- GoRoost -->
+    <!--<script src='//cdn.goroost.com/roostjs/kuypylxkqrk0q5izfwxqi23mvrbtsxos' async></script>-->
   </head>
   <body>
     <nav class="navbar navbar-default navbar-fixed-top">
@@ -21,7 +23,7 @@
             <div style="float:left;">
               <img src="static/favicon.png" alt="Learning Pulse" style="width:36px; margin:3px 20px 0 0;" />
             </div>
-            <a class="navbar-brand" href="#">LearningPulse</a>
+            <a class="navbar-brand" href="/rate">LearningPulse</a>
             <strong class="pull-right" style="margin-top:15px; float:right; color:white;">{{today}}</strong>
             <!--<a href="#" class="btn btn-default" style="margin-top:8px; float:right;">Play</a>-->
         </div><!--/.nav-collapse -->
@@ -54,7 +56,7 @@
                   <div class="form-group ">
                     <label class="col-lg-3 control-label">Activity</label>
                     <div class="col-lg-9">
-                      <span class="help-block">Main task in the past timeframe</span>
+                      <span class="help-block">What was the main activity in the chosen timeframe?</span>
                       <div class="radio">
                         <label>
                           <input type="radio" name="activity" value="reading" checked="">
@@ -70,13 +72,19 @@
                       <div class="radio">
                         <label>
                           <input type="radio" name="activity" value="meeting">
-                          Meeting
+                          Meeting (online, offline)
+                        </label>
+                      </div>
+                      <div class="radio">
+                        <label>
+                          <input type="radio" name="activity" value="communicating">
+                          Communicating (email, chat)
                         </label>
                       </div>
                       <div class="radio">
                         <label>
                           <input type="radio" name="activity" value="other">
-                          <input type="text" name="activity_description" placeholder="Other" />
+                          Other (lunch, gaming, ...)
                         </label>
                       </div>
                     </div>
@@ -84,7 +92,7 @@
                   <div class="form-group">
                     <label for="productivity" class="col-lg-3 control-label">Productivity</label>
                     <div class="col-lg-9">
-                      <span class="help-block">Your productivity in the past timeframe</span>
+                      <span class="help-block">How productive were you?</span>
                       <input id="productivity" name="productivity" data-slider-id='productivitySlider' type="text" data-slider-min="0" data-slider-max="100" data-slider-step="1" data-slider-value="50"/>
                       <hr>
                     </div>
@@ -92,7 +100,7 @@
                   <div class="form-group">
                     <label for="stress" class="col-lg-3 control-label">Stress</label>
                     <div class="col-lg-9">
-                      <span class="help-block">Your stress in the past timeframe</span>
+                      <span class="help-block">How stressed did you feel?</span>
                       <input id="stress" name="stress" data-slider-id='stressSlider' type="text" data-slider-min="0" data-slider-max="100" data-slider-step="1" data-slider-value="50" />
                       <hr>
                     </div>
@@ -100,7 +108,7 @@
                   <div class="form-group">
                     <label for="stress" class="col-lg-3 control-label">Challenge</label>
                     <div class="col-lg-9">
-                      <span class="help-block">Difficulty of the main activity in the past timeframe</span>
+                      <span class="help-block">How challenging was the activity?</span>
                       <input id="challenge" name="challenge" data-slider-id='challengeSlider' type="text" data-slider-min="0" data-slider-max="100" data-slider-step="1" data-slider-value="50" />
                       <hr>
                     </div>
@@ -108,7 +116,7 @@
                   <div class="form-group">
                     <label for="stress" class="col-lg-3 control-label">Abilities</label>
                     <div class="col-lg-9">
-                      <span class="help-block">Your preparation for the main activity in the past timeframe</span>
+                      <span class="help-block">Howe prepared did you feel for the activity?</span>
                       <input id="abilities" name="abilities" data-slider-id='abilitiesSlider' type="text" data-slider-min="0" data-slider-max="100" data-slider-step="1" data-slider-value="50" />
                       <hr>
                     </div>
@@ -137,20 +145,28 @@
           return value + '%';
         },
         ticks: [0, 25, 50, 75, 100],
-        ticks_labels: ["Very poor", "Poor", "Fair", "Good", "Full"],
+        ticks_labels: ["Very low", "Low", "Fair", "High", "Very high"],
         ticks_snap_bounds: 2
 
       });
       $('.timeframe-rating').click(function(e){ 
         var tf = $(this).attr("href").replace("#","");
-        var tf1 = 1+parseInt(tf,10)
+        var tf1 = 1+parseInt(tf,10);
         var tfbadge = "<span class='badge'>"+tf+" - "+tf1+"</span>";
         $("#timeframe-display").html(tfbadge);
         $("#timeframe-input").attr("value",tf);
         $("#rating-form").toggle();
         e.preventDefault();
       });
-       $("#rating-form").hide();
+      if(window.location.hash) {
+        var tf = window.location.hash;
+        var tf1 = tf+1;
+        var tfbadge = "<span class='badge'>"+tf+" - "+tf1+"</span>";
+        $("#timeframe-display").html(tfbadge);
+        $("#timeframe-input").attr("value",tf);
+      } else {
+        $("#rating-form").hide();
+      }
     </script>
   </body>
 </html>

@@ -21,6 +21,9 @@ from datetime import datetime, timedelta
 from google.appengine.api import users
 from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
+from google.appengine.api import mail
+
+import pandas as pd
 
 from apiclient.discovery import build
 from oauth2client.appengine import AppAssertionCredentials
@@ -44,12 +47,9 @@ timeframes = [7,8,9,10,11,12,13,14,15,16,17,18]
 todayNice = datetime.utcnow().strftime('%A %d, %b %Y') #e.g. Tuesday 03, Nov 2015]
 to = 1 # Time offset UTC+1 
 today = datetime.now() # dateobject 
+participants = ['ddm@ou.nl']
+user = users.get_current_user() #current user
 
-
-# We set a parent key on the 'Ratings' to ensure that they are all
-# in the same entity dashboard. Queries across the single entity dashboard
-# will be consistent. However, the write rate should be limited to
-# ~1/second.
 
 def dashboard_key(dashboard_name=DEFAULT_DASHBOARD_NAME):
     #Constructs a Datastore key for a Dashboard entity.
@@ -57,9 +57,8 @@ def dashboard_key(dashboard_name=DEFAULT_DASHBOARD_NAME):
     return ndb.Key('Dashboard', dashboard_name)
 
 class Author(ndb.Model):
-    """Sub model for representing an author."""
     identity = ndb.StringProperty(indexed=False)
-    email = ndb.StringProperty(indexed=False)
+    email = ndb.StringProperty(indexed=True)
 
 
 class Rating(ndb.Model):
@@ -78,14 +77,8 @@ class MainPage(webapp2.RequestHandler):
 
 
     def get(self):
-        dashboard_name = self.request.get('user', DEFAULT_DASHBOARD_NAME)
-        
-        ratings_query = Rating.query().order(-Rating.date)
-        ratings = ratings_query.fetch(10)
-
+        dashboard_name = self.request.get('user', DEFAULT_DASHBOARD_NAME)  
         currentHour = int(datetime.utcnow().strftime('%H')) #e.g. 9 
-        
-        user = users.get_current_user() 
         listTimeframes = ""
         if user:
             url = users.create_logout_url(self.request.uri)
@@ -99,7 +92,8 @@ class MainPage(webapp2.RequestHandler):
                         ancestor=dashboard_key(dashboard_name),
                         filters=ndb.AND(Rating.date >= date_object,
                                         Rating.date < date_object + timedelta(days=1),
-                                        Rating.timeframe == str(i+to))
+                                        Rating.timeframe == str(i+to),
+                                        Rating.author.email == user.email())
                     )
                     
                     if not query.get():
@@ -118,7 +112,6 @@ class MainPage(webapp2.RequestHandler):
 
         template_values = {
             'user': user,
-            'ratings': ratings,
             'dashboard_name': urllib.quote_plus(dashboard_name),
             'url': url,
             'url_linktext': url_linktext,
@@ -149,12 +142,9 @@ class MainPage(webapp2.RequestHandler):
         query_params = {'dashboard_name': dashboard_name}
         self.redirect('/?' + urllib.urlencode(query_params))
 
-
-
 class Visualisation(webapp2.RequestHandler):
     def get(self):
         dashboard_name = self.request.get('user', DEFAULT_DASHBOARD_NAME)
-        user = users.get_current_user() 
         if user:
             url = users.create_logout_url(self.request.uri)
             url_linktext = 'Logout' 
@@ -163,7 +153,8 @@ class Visualisation(webapp2.RequestHandler):
             query = Rating.query(
                 ancestor=dashboard_key(dashboard_name),
                 filters=ndb.AND(Rating.date >= date_object,
-                                Rating.date < date_object + timedelta(days=1))
+                                Rating.date < date_object + timedelta(days=1),
+                                Rating.author.email == user.email())
             )
             chart_x_label = "['x',"
             chart_productivity = "['Productivity',"
@@ -196,16 +187,48 @@ class Visualisation(webapp2.RequestHandler):
         template = JINJA_ENVIRONMENT.get_template('vis.html')
         self.response.write(template.render(template_values))
 
-class Login(webapp2.RequestHandler):
+class Reminder(webapp2.RequestHandler):
     def get(self):
-        user = users.get_current_user()
+
+        message = mail.EmailMessage(sender="Learning Pulse <dnldimitri@gmail.com>", #"daniele.dimitri@ou.nl",
+                        subject="It's time to rate your activity!")
+        message.html = """
+        <html>
+        <body style="font-family: Arial, sans-serif; font-size:11px; text-align:center;">
+        <p>
+            <a href="http://learningpulse-1096.appspot.com/rate">
+                <img src="http://learningpulse-1096.appspot.com/static/itstimetorate.jpg" alt="It's time to rate!" style="width:500px;" width="500" />
+            </a>
+        </p>
+        <p>
+            http://learningpulse-1096.appspot.com/rate <br />
+            Reply to this email in case of issue. <br />
+            LearningPulse - Welten Institute 2015
+        </p>
+        </body>
+        """
+        for email in participants:
+            message.to = email
+            message.send()
+            print "email sent to "+email
+            #message.to = user.email() # This would send it to the logged user
+
+class Login(webapp2.RequestHandler):
+    def get(self): 
         if user:
             self.redirect('/rate')
         else:
             self.redirect(users.create_login_url(self.request.uri))
 
+class Process(webapp2.RequestHandler):
+    def get(self):
+        data_frame = pd.read_gbq('SELECT * FROM [xAPIStatements.xapiTable]', PROJECT_NUMBER)
+        print data_frame
+
 app = webapp2.WSGIApplication([
     ('/', Login),
     ('/rate', MainPage),
     ('/vis', Visualisation),
+    ('/process', Process),
+    ('/joDKskOKufkwl39a3jwghga240ckaJEKRmcairtsDK', Reminder),
 ], debug=True)

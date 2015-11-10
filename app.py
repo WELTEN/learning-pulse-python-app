@@ -1,14 +1,8 @@
 """
 @filename: app.py
-@description: this script sets up the web application
+@description: This script sets up the GAE web application 
 @author: Daniele Di Mitri
 @date: 15-10-2015
-
-
-@Run 
-cd /usr/local/google_appengine/
-dev_appserver.py C:\Users\DDM\Documents\LearningPulse\webapp\learning-pulse-python-app 
-appcfg.py -A learningpulse-1096 update /Users/Daniele/Documents/LearningPulse/webapp/
 """
 
 import os
@@ -16,14 +10,13 @@ import urllib
 import httplib2
 import jinja2
 import webapp2
+import json
 from datetime import datetime, timedelta
 
 from google.appengine.api import users
 from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
 from google.appengine.api import mail
-
-import pandas as pd
 
 from apiclient.discovery import build
 from oauth2client.appengine import AppAssertionCredentials
@@ -49,7 +42,7 @@ to = 1 # Time offset UTC+1
 today = datetime.now() # dateobject 
 participants = ['ddm@ou.nl']
 user = users.get_current_user() #current user
-
+currentHour = int(datetime.utcnow().strftime('%H')) #e.g. 9 
 
 def dashboard_key(dashboard_name=DEFAULT_DASHBOARD_NAME):
     #Constructs a Datastore key for a Dashboard entity.
@@ -71,14 +64,13 @@ class Rating(ndb.Model):
     activity = ndb.StringProperty(indexed=False)
     date = ndb.DateTimeProperty(auto_now_add=True)
     timeframe = ndb.StringProperty(indexed=True)
+    latitude = ndb.FloatProperty(indexed=False)
+    longitude = ndb.FloatProperty(indexed=False)    
 
 
 class MainPage(webapp2.RequestHandler):
-
-
     def get(self):
         dashboard_name = self.request.get('user', DEFAULT_DASHBOARD_NAME)  
-        currentHour = int(datetime.utcnow().strftime('%H')) #e.g. 9 
         listTimeframes = ""
         if user:
             url = users.create_logout_url(self.request.uri)
@@ -137,6 +129,8 @@ class MainPage(webapp2.RequestHandler):
         rating.abilities = self.request.get('abilities')
         rating.activity = self.request.get('activity')
         rating.timeframe = self.request.get('timeframe')
+        rating.latitude = float(self.request.get('latitude'))
+        rating.longitude = float(self.request.get('longitude'))
         rating.put()
 
         query_params = {'dashboard_name': dashboard_name}
@@ -189,29 +183,36 @@ class Visualisation(webapp2.RequestHandler):
 
 class Reminder(webapp2.RequestHandler):
     def get(self):
+        # Random Joke generator Tambal
+        joke =  urllib.urlopen('http://tambal.azurewebsites.net/joke/random')
+        wjson = joke.read()
+        wjdata = json.loads(wjson)
 
+        # Compse the message 
         message = mail.EmailMessage(sender="Learning Pulse <dnldimitri@gmail.com>", #"daniele.dimitri@ou.nl",
                         subject="It's time to rate your activity!")
-        message.html = """
-        <html>
-        <body style="font-family: Arial, sans-serif; font-size:11px; text-align:center;">
-        <p>
-            <a href="http://learningpulse-1096.appspot.com/rate">
-                <img src="http://learningpulse-1096.appspot.com/static/itstimetorate.jpg" alt="It's time to rate!" style="width:500px;" width="500" />
-            </a>
-        </p>
-        <p>
-            http://learningpulse-1096.appspot.com/rate <br />
-            Reply to this email in case of issue. <br />
-            LearningPulse - Welten Institute 2015
-        </p>
-        </body>
-        """
+        message.html = " \
+        <html> \
+        <body style='font-family: Arial, sans-serif; font-size:11px; text-align:center;'> \
+        <p style='font-family: Courier new, sans-serif; font-size:12px; margin:20px 0; \
+        text-align:center; line-height:1.3em;'>" + wjdata['joke'] + "</p><p> \
+            <a href='http://learningpulse-1096.appspot.com/rate#"+str(currentHour)+"'> \
+                <img src='http://learningpulse-1096.appspot.com/static/itstimetorate.jpg' \
+                alt='It s time to rate!'  style='width:500px;' width='500' /> \
+            </a> \
+        </p> \
+        <p> \
+            <a href='http://learningpulse-1096.appspot.com/rate#"+str(currentHour)+"'> \
+            learningpulse-1096.appspot.com</a> <br /> <br /> \
+            Reply to this email in case of issue. <br /><br /> \
+            LearningPulse - Welten Institute 2015 \
+        </p> \
+        </body>"
+
+        # Loop through the email array Participants and send an email
         for email in participants:
             message.to = email
             message.send()
-            print "email sent to "+email
-            #message.to = user.email() # This would send it to the logged user
 
 class Login(webapp2.RequestHandler):
     def get(self): 
@@ -220,15 +221,9 @@ class Login(webapp2.RequestHandler):
         else:
             self.redirect(users.create_login_url(self.request.uri))
 
-class Process(webapp2.RequestHandler):
-    def get(self):
-        data_frame = pd.read_gbq('SELECT * FROM [xAPIStatements.xapiTable]', PROJECT_NUMBER)
-        print data_frame
-
 app = webapp2.WSGIApplication([
     ('/', Login),
     ('/rate', MainPage),
     ('/vis', Visualisation),
-    ('/process', Process),
     ('/joDKskOKufkwl39a3jwghga240ckaJEKRmcairtsDK', Reminder),
 ], debug=True)

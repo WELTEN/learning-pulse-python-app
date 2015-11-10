@@ -24,6 +24,7 @@
               <img src="static/favicon.png" alt="Learning Pulse" style="width:36px; margin:3px 20px 0 0;" />
             </div>
             <a class="navbar-brand" href="/rate">LearningPulse</a>
+            <a href="#" class="get-location" onclick="geoFindMe()"><span class="glyphicon glyphicon-map-marker"></span></a>
             <strong class="pull-right" style="margin-top:15px; float:right; color:white;">{{today}}</strong>
             <!--<a href="#" class="btn btn-default" style="margin-top:8px; float:right;">Play</a>-->
         </div><!--/.nav-collapse -->
@@ -53,6 +54,8 @@
             <div class="panel-body">
               <form class="form-rating" action="/rate?user={{ dashboard_name }}" method="post">
                   <input type="hidden" value="" name="timeframe" id="timeframe-input" />
+                  <input type="hidden" value="" name="latitude" id="latitude-input" />
+                  <input type="hidden" value="" name="longitude" id="longitude-input" />
                   <div class="form-group ">
                     <label class="col-lg-3 control-label">Activity</label>
                     <div class="col-lg-9">
@@ -159,13 +162,50 @@
         e.preventDefault();
       });
       if(window.location.hash) {
-        var tf = window.location.hash;
-        var tf1 = tf+1;
+        var tf = window.location.hash.replace("#","");
+        var tf1 = 1+parseInt(tf,10);
         var tfbadge = "<span class='badge'>"+tf+" - "+tf1+"</span>";
         $("#timeframe-display").html(tfbadge);
         $("#timeframe-input").attr("value",tf);
       } else {
         $("#rating-form").hide();
+      }
+      // Default Lat, Long
+      var def_lat = 50;//50.8779846;
+      var def_long = 5;//5.9582749;
+      function geoFindMe() {
+        if (navigator.geolocation) {
+         navigator.geolocation.getCurrentPosition(getPosition,errors);         
+        } else { //In case browser doesn't support geolocation set the default values 
+            user_lat  = def_lat;
+            user_long = def_long; 
+        }
+      }
+      function getPosition(position) {
+          user_lat  = position.coords.latitude;
+          user_long = position.coords.longitude; 
+          $("#latitude-input").attr("value",user_lat);
+          $("#longitude-input").attr("value",user_long);
+      }
+      function errors(error_code) {
+        switch(error.code) {
+         case error.PERMISSION_DENIED:
+         FAIL("PERMISSION_DENIED");
+         break;
+         
+         case error.POSITION_UNAVAILABLE:
+         FAIL("POSITION_UNAVAILABLE");
+           break;
+         
+         case error.TIMEOUT:
+         FAIL("TIMEOUT");
+           break;
+         
+         case error.UNKNOWN_ERROR:
+         FAIL("UNKNOWN_ERROR");
+           break;
+        }
+        return;
       }
     </script>
   </body>

@@ -6,12 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="static/favicon.ico" />
     <link rel="icon" type="image/png" href="static/favicon.png" />
+    <link rel="manifest" href="static/manifest.json" />
 
     <!-- Bootstrap -->
     <link href="static/bootstrap.min.css" rel="stylesheet" media="screen">
     <link href="static/bootstrap-slider.css" rel="stylesheet" media="screen">
     <link href="static/bootstrap-switch.css" rel="stylesheet" media="screen">
     <link href="static/custom.css" rel="stylesheet" media="screen">
+    <!-- GoRoost -->
+    <!--<script src='//cdn.goroost.com/roostjs/kuypylxkqrk0q5izfwxqi23mvrbtsxos' async></script>-->
   </head>
   <body>
     <nav class="navbar navbar-default navbar-fixed-top">
@@ -20,9 +23,13 @@
             <div style="float:left;">
               <img src="static/favicon.png" alt="Learning Pulse" style="width:36px; margin:3px 20px 0 0;" />
             </div>
-            <a class="navbar-brand" href="#">LearningPulse</a>
-            <strong class="pull-right" style="margin-top:15px; float:right; color:white;">{{today}}</strong>
-            <!--<a href="#" class="btn btn-default" style="margin-top:8px; float:right;">Play</a>-->
+            <a class="navbar-brand" href="/rate">LearningPulse</a>   
+            <strong  style="margin-top:15px; float:right; color:white;">{{today}}</strong>
+            <ul class="nav navbar-nav pull-right">
+                <li>
+                    <a href="/rate">Rate</a>
+                </li>
+            </ul>
         </div><!--/.nav-collapse -->
       </div>
     </nav>
@@ -31,7 +38,7 @@
         <div class="col-lg-12 box-container">
           <!--<h3>Activity Rating Tool</h3><hr>-->
           <div class="panel panel-default">
-            <div class="panel-heading"><strong>Visualisations for {{today}}</strong></div>
+            <div class="panel-heading"><strong>Visualisation for {{today}}</strong></div>
             <div class="panel-body">
               <div id="chart"></div>
             </div>
@@ -41,6 +48,7 @@
     <p class="text-center text-white"><strong>LearningPulse</strong> - Welten Institute 2015 - <a href="{{ url|safe }}">{{ url_linktext }}</a></p>
     </div> <!-- /container -->
     <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script src="static/geolocation.js"></script>
     <link href="static/c3.min.css" rel="stylesheet" type="text/css"> 
     <script src="static/d3.min.js" charset="utf-8"></script>
     <script src="static/c3.min.js"></script>

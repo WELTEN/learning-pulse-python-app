@@ -5,19 +5,17 @@
 @date: 15-10-2015
 """
 
-import os
-import urllib
-import httplib2
-import jinja2
-import webapp2
-import json
+import os, json
+import urllib, urllib2, httplib2
+import jinja2, webapp2
+import base64
 from datetime import datetime, timedelta
-import atom.http
 
 from google.appengine.api import users
 from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
 from google.appengine.api import mail
+from google.appengine.api import urlfetch
 
 from apiclient.discovery import build
 from oauth2client.appengine import AppAssertionCredentials
@@ -28,7 +26,11 @@ PROJECT_NUMBER = '815835684542'
 credentials = AppAssertionCredentials(scope=url)
 httpss = credentials.authorize(httplib2.Http())
 bigquery_service = build('bigquery','v2',http=httpss)
-
+    
+#Google Big Query credential
+dataProxyURL = 'http://learning-pulse.appspot.com/data-proxy/xAPI/statement/origin/rating'
+dataProxyHeader = {"Content-Type": "application/json", "X-Experience-API-Version": "1.0.0","Authorization": \
+                         "Basic %s" % base64.b64encode("test:test")}
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -45,12 +47,6 @@ participants = ['ddm@ou.nl']
 user = users.get_current_user() #current user
 defaultLat = 50
 defaultLong = 5
-
-#Google Big Query credential
-dataProxURL = 'http://learning-pulse.appspot.com/data-proxy/xAPI/statement/origin/ratings'
-dataProxyHeader = {'Content-Type': 'application/json', 'X-Experience-API-Version': '1.0.0'}
-dataProxyUsername = 'test' #note: bad security
-dataProxyPassword= 'test' #note: bad security
 
 def dashboard_key(dashboard_name=DEFAULT_DASHBOARD_NAME):
     #Constructs a Datastore key for a Dashboard entity.
@@ -101,7 +97,7 @@ class MainPage(webapp2.RequestHandler):
                         listTimeframes += "<a href='#"+str(i+to)+"' class='list-group-item timeframe-rating'><span class='badge'>"+str(i+to)+ \
                         " - "+str(i+to+1)+" </span> Rate this timeframe</a>"
                     else:
-                        listTimeframes += "<a href='#"+str(i+to)+"' class='list-group-item list-group-item-success'>"+"<span class='badge'>"+ \
+                        listTimeframes += "<a href='/delete?t="+str(i+to)+"' class='list-group-item list-group-item-success'  onclick='return confirm_delete()'>"+"<span class='badge'>"+ \
                         str(i+to)+" - "+str(i+to+1)+"</span> You rated this timeframe already</>"
                 elif i==currentHour:
                     listTimeframes += "<a href='#"+str(i+to)+"' class='list-group-item list-group-item-warning disabled'>"+"<span class='badge'>"+ \
@@ -152,18 +148,24 @@ class MainPage(webapp2.RequestHandler):
         #-------------------------
         # xAPI statement Productivity
 
+        # I convert the Timestamp to the corresponding timeframe
+        hr = str(int(rating.timeframe)+1).zfill(2)
+        dt = '{0.year}-{0.month}-{0.day}'.format(rating.date)
+
+        dateXApi = dt + "T" + hr + ":00:00.000Z" 
+
         #xAPI statement productivity
         xAPI = [None] * 5
-        xAPI[0] = '{ "timestamp":  "'+str(Rating.date)+'", "id": \
-        "", "actor": { "objectType": "Agent", \
-        "name": "'+str(Rating.author.email)+'", "mbox": "'+str(Rating.author.email)+'" }, \
+        xAPI[0] = '{ "timestamp":  "'+dateXApi+'", "id": \
+        "n.a.", "actor": { "objectType": "Agent", \
+        "name": "%s", "mbox": "mailto:%s" }, \
         "verb": { "id": "http://id.tincanapi.com/verb/rated", \
         "display": { "en-US": "indicates the user rated something"\
         } }, "object": { "objectType": "Activity", "id": "Productivity", \
         "definition": { "name": { "en-US": "rated activity" }, \
         "description": { "en-US": "rated activity" }, "type": \
         "http://adlnet.gov/expapi/activities/performance" } }, "result":\
-        { "response": "'+str(Rating.productivity)+'" }, "context": { "extensions": { \
+        { "response": "%s" }, "context": { "extensions": { \
         "http://activitystrea.ms/schema/1.0/place": { "definition": \
         { "type": "http://activitystrea.ms/schema/1.0/place", "name":\
         { "en-US": "Place" }, "description": { "en-US": \
@@ -171,20 +173,20 @@ class MainPage(webapp2.RequestHandler):
         "http://vocab.org/placetime/geopoint/wgs84/X-15.416497Y28.079203.html", \
         "geojson": { "type": "FeatureCollection", "features": [ \
         { "geometry": { "type": "Point", "coordinates": [ \
-        '+str(rating.latitude)+', '+str(rating.longitude)+' ] }, "type": "Feature" } ] }, \
-        "objectType": "Place" } } } }'
+        %d,%d] }, "type": "Feature" } ] }, "objectType": "Place" } } } }' \
+         % (rating.author.email,rating.author.email,rating.productivity,rating.latitude,rating.longitude)
 
         # xAPI statement Stress
-        xAPI[1] = '{ "timestamp":  "'+str(Rating.date)+'", "id": \
-        "", "actor": { "objectType": "Agent", \
-        "name": "'+str(Rating.author.email)+'", "mbox": "'+str(Rating.author.email)+'" }, \
+        xAPI[1] = '{ "timestamp":  "'+dateXApi+'", "id": \
+        "n.a.", "actor": { "objectType": "Agent", \
+        "name": "%s", "mbox": "mailto:%s" }, \
         "verb": { "id": "http://id.tincanapi.com/verb/rated", \
         "display": { "en-US": "indicates the user rated something"\
         } }, "object": { "objectType": "Activity", "id": "Stress", \
         "definition": { "name": { "en-US": "rated activity" }, \
         "description": { "en-US": "rated activity" }, "type": \
         "http://adlnet.gov/expapi/activities/performance" } }, "result":\
-        { "response": "'+str(Rating.stress)+'" }, "context": { "extensions": { \
+        { "response": "%s" }, "context": { "extensions": { \
         "http://activitystrea.ms/schema/1.0/place": { "definition": \
         { "type": "http://activitystrea.ms/schema/1.0/place", "name":\
         { "en-US": "Place" }, "description": { "en-US": \
@@ -192,20 +194,21 @@ class MainPage(webapp2.RequestHandler):
         "http://vocab.org/placetime/geopoint/wgs84/X-15.416497Y28.079203.html", \
         "geojson": { "type": "FeatureCollection", "features": [ \
         { "geometry": { "type": "Point", "coordinates": [ \
-        '+str(rating.latitude)+', '+str(rating.longitude)+' ] }, "type": "Feature" } ] }, \
-        "objectType": "Place" } } } }'
+        %d,%d] }, "type": "Feature" } ] }, "objectType": "Place" } } } }' \
+         % (rating.author.email,rating.author.email,rating.stress,rating.latitude,rating.longitude)
+
 
         # xAPI statement Challenge
-        xAPI[2]  = '{ "timestamp": "'+str(Rating.date)+'", "id": \
-        "", "actor": { "objectType": "Agent", \
-        "name": "'+str(Rating.author.email)+'", "mbox": "'+str(Rating.author.email)+'" }, \
+        xAPI[2]  = '{ "timestamp":  "'+dateXApi+'", "id": \
+        "n.a.", "actor": { "objectType": "Agent", \
+        "name": "%s", "mbox": "mailto:%s" }, \
         "verb": { "id": "http://id.tincanapi.com/verb/rated", \
         "display": { "en-US": "indicates the user rated something"\
         } }, "object": { "objectType": "Activity", "id": "Challenge", \
         "definition": { "name": { "en-US": "rated activity" }, \
         "description": { "en-US": "rated activity" }, "type": \
         "http://adlnet.gov/expapi/activities/performance" } }, "result":\
-        { "response": "'+str(Rating.challenge)+'" }, "context": { "extensions": { \
+        { "response": "%s" }, "context": { "extensions": { \
         "http://activitystrea.ms/schema/1.0/place": { "definition": \
         { "type": "http://activitystrea.ms/schema/1.0/place", "name":\
         { "en-US": "Place" }, "description": { "en-US": \
@@ -213,20 +216,20 @@ class MainPage(webapp2.RequestHandler):
         "http://vocab.org/placetime/geopoint/wgs84/X-15.416497Y28.079203.html", \
         "geojson": { "type": "FeatureCollection", "features": [ \
         { "geometry": { "type": "Point", "coordinates": [ \
-        '+str(rating.latitude)+', '+str(rating.longitude)+' ] }, "type": "Feature" } ] }, \
-        "objectType": "Place" } } } }'
+        %d,%d] }, "type": "Feature" } ] }, "objectType": "Place" } } } }' \
+         % (rating.author.email,rating.author.email,rating.challenge,rating.latitude,rating.longitude)
 
         # xAPI statement Ability
-        xAPI[3]  = '{ "timestamp":  "'+str(Rating.date)+'", "id": \
-        "", "actor": { "objectType": "Agent", \
-        "name": "'+str(Rating.author.email)+'", "mbox": "'+str(Rating.author.email)+'" }, \
+        xAPI[3]  = '{ "timestamp":  "'+dateXApi+'", "id": \
+        "n.a.", "actor": { "objectType": "Agent", \
+        "name": "%s", "mbox": "mailto:%s" }, \
         "verb": { "id": "http://id.tincanapi.com/verb/rated", \
         "display": { "en-US": "indicates the user rated something"\
-        } }, "object": { "objectType": "Activity", "id": "Ability", \
+        } }, "object": { "objectType": "Activity", "id": "abilities", \
         "definition": { "name": { "en-US": "rated activity" }, \
         "description": { "en-US": "rated activity" }, "type": \
         "http://adlnet.gov/expapi/activities/performance" } }, "result":\
-        { "response": "'+str(Rating.challenge)+'" }, "context": { "extensions": { \
+        { "response": "%s" }, "context": { "extensions": { \
         "http://activitystrea.ms/schema/1.0/place": { "definition": \
         { "type": "http://activitystrea.ms/schema/1.0/place", "name":\
         { "en-US": "Place" }, "description": { "en-US": \
@@ -234,46 +237,44 @@ class MainPage(webapp2.RequestHandler):
         "http://vocab.org/placetime/geopoint/wgs84/X-15.416497Y28.079203.html", \
         "geojson": { "type": "FeatureCollection", "features": [ \
         { "geometry": { "type": "Point", "coordinates": [ \
-        '+str(rating.latitude)+', '+str(rating.longitude)+' ] }, "type": "Feature" } ] }, \
-        "objectType": "Place" } } } }'
+        %d,%d] }, "type": "Feature" } ] }, "objectType": "Place" } } } }' \
+         % (rating.author.email,rating.author.email,rating.abilities,rating.latitude,rating.longitude)
 
         # xAPI statement Activity
-        xAPI[4]  = '{  "'+str(Rating.date)+'", "id": \
-        "", "actor": { "objectType": "Agent", \
-        "name": "'+str(Rating.author.email)+'", "mbox": "'+str(Rating.author.email)+'"\
-         }, "verb": { "id": "http://adlnet.gov/expapi/verbs/experienced", \
-         "display": { "en-US": "indicates the user experienced something"\
-          } }, "object": { "objectType": "Activity", "id": "MainActivity"\
-          , "definition": { "name": { "en-US": "main activity" }, \
-          "description": { "en-US": "main activity" }, "type": \
-          "http://activitystrea.ms/schema/1.0/event" } }, "result": \
-          { "response": "'+str(Rating.activity)+'" }, "context": { "extensions": { \
-          "http://activitystrea.ms/schema/1.0/place": { "definition":\
-           { "type": "http://activitystrea.ms/schema/1.0/place", \
-           "name": { "en-US": "Place" }, "description": { "en-US":\
-            "Represents a physical location." } }, "id": \
-            "http://vocab.org/placetime/geopoint/wgs84/X-15.416497Y28.079203.html",\
-             "geojson": { "type": "FeatureCollection", "features": \
-             [ { "geometry": { "type": "Point", "coordinates": \
-             [ '+str(rating.latitude)+', '+str(rating.longitude)+' ] }, "type": "Feature" } ] },\
-              "objectType": "Place" } } } }'
+        xAPI[4]  = '{ "timestamp":  "'+dateXApi+'", "id": \
+        "n.a.", "actor": { "objectType": "Agent", \
+        "name": "%s", "mbox": "mailto:%s" }, \
+        "verb": { "id": "http://adlnet.gov/expapi/verbs/experienced", \
+        "display": { "en-US": "indicates the user experienced something"\
+        } }, "object": { "objectType": "Activity", "id": "MainActivity"\
+        , "definition": { "name": { "en-US": "main activity" }, \
+        "description": { "en-US": "main activity" }, "type": \
+        "http://activitystrea.ms/schema/1.0/event" } }, "result": \
+        { "response": "%s" }, "context": { "extensions": { \
+        "http://activitystrea.ms/schema/1.0/place": { "definition":\
+        { "type": "http://activitystrea.ms/schema/1.0/place", \
+        "name": { "en-US": "Place" }, "description": { "en-US":\
+        "Represents a physical location." } }, "id": \
+        "http://vocab.org/placetime/geopoint/wgs84/X-15.416497Y28.079203.html",\
+        "geojson": { "type": "FeatureCollection", "features": \
+        [ { "geometry": { "type": "Point", "coordinates":[ \
+        %d,%d] }, "type": "Feature" } ] }, "objectType": "Place" } } } }' \
+        % (rating.author.email,rating.author.email,rating.activity,rating.latitude,rating.longitude)
+
         message = mail.EmailMessage(sender="Learning Pulse <dnldimitri@gmail.com>", #"daniele.dimitri@ou.nl",
                             subject="xAPI")
+        
         emailbody = ""
-        client = atom.http.HttpClient()
         for statement in xAPI:
-            emailbody += statement + "--------------------------------- "
-            json.loads(statement)
-
-              
-              http_response = client.request
-            requests.post(url=url, headers=headers, json=parsed_json, auth=HTTPBasicAuth(username, password))
-        message.body = emailbody
-        message.to = "dnldimitri@gmail.com"
-        message.send()
+            #emailbody += statement + "--------------------------------- "
+            parsed_json = json.loads(statement)
+            result = urlfetch.fetch(url=dataProxyURL, headers=dataProxyHeader, payload = statement, method=urlfetch.POST)
+        #message.body = emailbody
+        #message.to = "dnldimitri@gmail.com"
+        #message.send()
         query_params = {'dashboard_name': dashboard_name}
         self.redirect('/?' + urllib.urlencode(query_params))
-
+ 
 class Visualisation(webapp2.RequestHandler):
     def get(self):
         dashboard_name = self.request.get('user', DEFAULT_DASHBOARD_NAME)
@@ -318,7 +319,7 @@ class Visualisation(webapp2.RequestHandler):
             url = users.create_login_url(self.request.uri)
             url_linktext = 'Login'
 
-        template = JINJA_ENVIRONMENT.get_template('vis.html')
+        template = JINJA_ENVIRONMENT.get_template('viz.html')
         self.response.write(template.render(template_values))
 
 class Reminder(webapp2.RequestHandler):
@@ -329,35 +330,29 @@ class Reminder(webapp2.RequestHandler):
         if (weekday<5): #This control limits blocks the emails on Sat and Sun
             
             #fetching a random joke 
-            request =  urllib.urlopen('http://api.icndb.com/jokes/random')
-            full_json = urllib2.urlopen(request).read()
+            req = urllib2.Request("http://api.icndb.com/jokes/random?exclude=[nerdy,explicit]")
+            full_json = urllib2.urlopen(req).read()
             full = json.loads(full_json)
-            joke = ''
-            for j in full['value']:
-                joke += j + ''
+            joke = full['value']['joke']
 
             currentHour = int(datetime.utcnow().strftime('%H')) #e.g. 9 
             
             # Compse the message 
             message = mail.EmailMessage(sender="Learning Pulse <dnldimitri@gmail.com>", #"daniele.dimitri@ou.nl",
                             subject="It's time to rate your activity!")
-            message.html = " \
-            <html> \
+            message.html = "<html> \
             <body style='font-family: Arial, sans-serif; font-size:11px; text-align:center;'> \
             <p style='font-family: Courier new, sans-serif; font-size:12px; margin:20px 0; \
             text-align:center; line-height:1.3em;'>" + joke + "</p><p> \
                 <a href='http://learningpulse-1096.appspot.com/rate#"+str(currentHour)+"'> \
                     <img src='http://learningpulse-1096.appspot.com/static/itstimetorate.jpg' \
                     alt='It s time to rate!'  style='width:500px;' width='500' /> \
-                </a> \
-            </p> \
-            <p> \
-                <a href='http://learningpulse-1096.appspot.com/rate#"+str(currentHour)+"'> \
+                </a></p> \
+            <p><a href='http://learningpulse-1096.appspot.com/rate#"+str(currentHour)+"'> \
                 learningpulse-1096.appspot.com</a> <br /> <br /> \
                 Reply to this email in case of issue. <br /><br /> \
                 LearningPulse - Welten Institute 2015 \
-            </p> \
-            </body>"
+            </p></body>"
 
             # Loop through the email array Participants and send an email
             for email in participants:
@@ -371,9 +366,21 @@ class Login(webapp2.RequestHandler):
         else:
             self.redirect(users.create_login_url(self.request.uri))
 
+
+class DeleteHandler(webapp2.RequestHandler):
+    def get(self):
+        key = self.request.get('t')
+        if user:
+            timeframes_keys = Rating.query(filters=ndb.AND(Rating.timeframe == key,
+                                            Rating.author.email == user.email())
+                        ).fetch(keys_only=True)
+            ndb.delete_multi(timeframes_keys)
+        self.redirect('/rate')   
+        
 app = webapp2.WSGIApplication([
     ('/', Login),
     ('/rate', MainPage),
-    ('/vis', Visualisation),
+    ('/viz', Visualisation),
+    ('/delete', DeleteHandler),
     ('/joDKskOKufkwl39a3jwghga240ckaJEKRmcairtsDK', Reminder),
 ], debug=True)

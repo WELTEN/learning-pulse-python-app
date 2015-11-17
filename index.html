@@ -25,12 +25,17 @@
             </div>
             <a class="navbar-brand" href="/rate">LearningPulse</a>   
             <strong  style="margin-top:15px; float:right; color:white;">{{today}}</strong>
+            <ul class="nav navbar-nav">
+                <li>
+                    <a href="/rate">Rate</a>
+                </li>
+                <li>
+                    <a href="/viz">Viz</a>
+                </li>
+            </ul>
             <ul class="nav navbar-nav pull-right">
                 <li>
                     <a href="#" class="get-location" onclick="geoFindMe()"><img src="static/marker.png" alt="Loc" width="16px" /></a>
-                </li>
-                <li>
-                    <a href="/vis">Viz</a>
                 </li>
             </ul>
         </div><!--/.nav-collapse -->
@@ -163,6 +168,10 @@
         $("#timeframe-input").attr("value",tf);
       } else {
         $("#rating-form").hide();
+      }
+
+      function confirm_delete() {
+          return confirm('Are you sure you want to delete this rating?')
       }
 
     </script>

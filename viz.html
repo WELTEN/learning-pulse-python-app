@@ -25,9 +25,12 @@
             </div>
             <a class="navbar-brand" href="/rate">LearningPulse</a>   
             <strong  style="margin-top:15px; float:right; color:white;">{{today}}</strong>
-            <ul class="nav navbar-nav pull-right">
+            <ul class="nav navbar-nav">
                 <li>
                     <a href="/rate">Rate</a>
+                </li>
+                <li>
+                    <a href="/viz">Viz</a>
                 </li>
             </ul>
         </div><!--/.nav-collapse -->
@@ -54,6 +57,7 @@
     <script src="static/c3.min.js"></script>
     <script type="text/javascript">
       var chart = c3.generate({
+          axis: {x: {type:'category'}},
           data: {
               x: 'x',
               columns: [{{chart_data|safe}}],

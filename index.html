@@ -19,12 +19,16 @@
   <body>
     <nav class="navbar navbar-default navbar-fixed-top">
       <div class="container"> 
-        <div id="navbar" class="">
-            <div style="float:left;">
-              <img src="static/favicon.png" alt="Learning Pulse" style="width:36px; margin:3px 20px 0 0;" />
-            </div>
-            <a class="navbar-brand" href="/rate">LearningPulse</a>   
-            <strong  style="margin-top:15px; float:right; color:white;">{{today}}</strong>
+
+        <div class="navbar-header">
+          <a class="navbar-brand" href="/rate" style="padding:0 15px 0 0;"><img src="static/favicon.png" alt="Learning Pulse" style="width:36px; margin:3px 20px 0; display:inline;" />LearningPulse</a>
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+        <div id="navbar-main" class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
                 <li>
                     <a href="/rate">Rate</a>
@@ -32,12 +36,14 @@
                 <li>
                     <a href="/viz">Viz</a>
                 </li>
-            </ul>
-            <ul class="nav navbar-nav pull-right">
                 <li>
                     <a href="#" class="get-location" onclick="geoFindMe()"><img src="static/marker.png" alt="Loc" width="16px" /></a>
                 </li>
+                
             </ul>
+            <div class="pull-right">
+              <strong style="color:white; padding:15px 5px; display:block; ">{{today}}</strong>
+            </div>
         </div><!--/.nav-collapse -->
       </div>
     </nav>
@@ -139,6 +145,7 @@
     <p class="text-center text-white"><strong>LearningPulse</strong> - Welten Institute 2015 - <a href="{{ url|safe }}">{{ url_linktext }}</a></p>
     </div> <!-- /container -->
     <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script src="static/bootstrap.min.js"></script>
     <script src="static/bootstrap-switch.js"></script>
     <script src="static/bootstrap-slider.js"></script>
     <script type="text/javascript">

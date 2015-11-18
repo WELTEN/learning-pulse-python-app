@@ -44,7 +44,6 @@ todayNice = datetime.utcnow().strftime('%A %d, %b %Y') #e.g. Tuesday 03, Nov 201
 to = 1 # Time offset UTC+1 
 today = datetime.now() # dateobject 
 participants = ['ddm@ou.nl']
-user = users.get_current_user() #current user
 defaultLat = 50
 defaultLong = 5
 
@@ -76,6 +75,7 @@ class MainPage(webapp2.RequestHandler):
     def get(self):
         dashboard_name = self.request.get('user', DEFAULT_DASHBOARD_NAME)  
         currentHour = int(datetime.utcnow().strftime('%H')) #e.g. 9 
+        user = users.get_current_user()
         listTimeframes = ""
         if user:
             url = users.create_logout_url(self.request.uri)
@@ -122,7 +122,7 @@ class MainPage(webapp2.RequestHandler):
     def post(self):
         dashboard_name = self.request.get('dashboard_name', DEFAULT_DASHBOARD_NAME)
         rating = Rating(parent=dashboard_key(dashboard_name))
-
+        user = users.get_current_user()
         if users.get_current_user():
             rating.author = Author(
                     identity=users.get_current_user().user_id(),
@@ -156,9 +156,8 @@ class MainPage(webapp2.RequestHandler):
 
         #xAPI statement productivity
         xAPI = [None] * 5
-        xAPI[0] = '{ "timestamp":  "'+dateXApi+'", "id": \
-        "n.a.", "actor": { "objectType": "Agent", \
-        "name": "%s", "mbox": "mailto:%s" }, \
+        xAPI[0] = '{ "timestamp":  "'+dateXApi+'",  "actor": \
+        { "objectType": "Agent", "name": "%s", "mbox": "mailto:%s" }, \
         "verb": { "id": "http://id.tincanapi.com/verb/rated", \
         "display": { "en-US": "indicates the user rated something"\
         } }, "object": { "objectType": "Activity", "id": "Productivity", \
@@ -177,9 +176,8 @@ class MainPage(webapp2.RequestHandler):
          % (rating.author.email,rating.author.email,rating.productivity,rating.latitude,rating.longitude)
 
         # xAPI statement Stress
-        xAPI[1] = '{ "timestamp":  "'+dateXApi+'", "id": \
-        "n.a.", "actor": { "objectType": "Agent", \
-        "name": "%s", "mbox": "mailto:%s" }, \
+        xAPI[1] = '{ "timestamp":  "'+dateXApi+'", "actor": \
+        { "objectType": "Agent", "name": "%s", "mbox": "mailto:%s" }, \
         "verb": { "id": "http://id.tincanapi.com/verb/rated", \
         "display": { "en-US": "indicates the user rated something"\
         } }, "object": { "objectType": "Activity", "id": "Stress", \
@@ -199,9 +197,8 @@ class MainPage(webapp2.RequestHandler):
 
 
         # xAPI statement Challenge
-        xAPI[2]  = '{ "timestamp":  "'+dateXApi+'", "id": \
-        "n.a.", "actor": { "objectType": "Agent", \
-        "name": "%s", "mbox": "mailto:%s" }, \
+        xAPI[2]  = '{ "timestamp":  "'+dateXApi+'", "actor": \
+        { "objectType": "Agent", "name": "%s", "mbox": "mailto:%s" }, \
         "verb": { "id": "http://id.tincanapi.com/verb/rated", \
         "display": { "en-US": "indicates the user rated something"\
         } }, "object": { "objectType": "Activity", "id": "Challenge", \
@@ -220,12 +217,11 @@ class MainPage(webapp2.RequestHandler):
          % (rating.author.email,rating.author.email,rating.challenge,rating.latitude,rating.longitude)
 
         # xAPI statement Ability
-        xAPI[3]  = '{ "timestamp":  "'+dateXApi+'", "id": \
-        "n.a.", "actor": { "objectType": "Agent", \
-        "name": "%s", "mbox": "mailto:%s" }, \
+        xAPI[3]  = '{ "timestamp":  "'+dateXApi+'",  "actor": \
+        { "objectType": "Agent", "name": "%s", "mbox": "mailto:%s" }, \
         "verb": { "id": "http://id.tincanapi.com/verb/rated", \
         "display": { "en-US": "indicates the user rated something"\
-        } }, "object": { "objectType": "Activity", "id": "abilities", \
+        } }, "object": { "objectType": "Activity", "id": "Abilities", \
         "definition": { "name": { "en-US": "rated activity" }, \
         "description": { "en-US": "rated activity" }, "type": \
         "http://adlnet.gov/expapi/activities/performance" } }, "result":\
@@ -241,9 +237,8 @@ class MainPage(webapp2.RequestHandler):
          % (rating.author.email,rating.author.email,rating.abilities,rating.latitude,rating.longitude)
 
         # xAPI statement Activity
-        xAPI[4]  = '{ "timestamp":  "'+dateXApi+'", "id": \
-        "n.a.", "actor": { "objectType": "Agent", \
-        "name": "%s", "mbox": "mailto:%s" }, \
+        xAPI[4]  = '{ "timestamp":  "'+dateXApi+'", "actor": \
+        { "objectType": "Agent", "name": "%s", "mbox": "mailto:%s" }, \
         "verb": { "id": "http://adlnet.gov/expapi/verbs/experienced", \
         "display": { "en-US": "indicates the user experienced something"\
         } }, "object": { "objectType": "Activity", "id": "MainActivity"\
@@ -278,6 +273,7 @@ class MainPage(webapp2.RequestHandler):
 class Visualisation(webapp2.RequestHandler):
     def get(self):
         dashboard_name = self.request.get('user', DEFAULT_DASHBOARD_NAME)
+        user = users.get_current_user()
         if user:
             url = users.create_logout_url(self.request.uri)
             url_linktext = 'Logout' 
@@ -361,6 +357,7 @@ class Reminder(webapp2.RequestHandler):
 
 class Login(webapp2.RequestHandler):
     def get(self): 
+        user = users.get_current_user()
         if user:
             self.redirect('/rate')
         else:
@@ -370,13 +367,17 @@ class Login(webapp2.RequestHandler):
 class DeleteHandler(webapp2.RequestHandler):
     def get(self):
         key = self.request.get('t')
+        dashboard_name = self.request.get('user', DEFAULT_DASHBOARD_NAME)
+        user = users.get_current_user()
         if user:
-            timeframes_keys = Rating.query(filters=ndb.AND(Rating.timeframe == key,
-                                            Rating.author.email == user.email())
+            timeframes_keys = Rating.query(
+                ancestor=dashboard_key(dashboard_name),
+                filters=ndb.AND(Rating.timeframe == key,
+                                 Rating.author.email == user.email())
                         ).fetch(keys_only=True)
             ndb.delete_multi(timeframes_keys)
         self.redirect('/rate')   
-        
+
 app = webapp2.WSGIApplication([
     ('/', Login),
     ('/rate', MainPage),

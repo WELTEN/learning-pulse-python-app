@@ -172,7 +172,7 @@ class MainPage(webapp2.RequestHandler):
         "http://vocab.org/placetime/geopoint/wgs84/X-15.416497Y28.079203.html", \
         "geojson": { "type": "FeatureCollection", "features": [ \
         { "geometry": { "type": "Point", "coordinates": [ \
-        %d,%d] }, "type": "Feature" } ] }, "objectType": "Place" } } } }' \
+        %s,%s] }, "type": "Feature" } ] }, "objectType": "Place" } } } }' \
          % (rating.author.email,rating.author.email,rating.productivity,rating.latitude,rating.longitude)
 
         # xAPI statement Stress
@@ -192,7 +192,7 @@ class MainPage(webapp2.RequestHandler):
         "http://vocab.org/placetime/geopoint/wgs84/X-15.416497Y28.079203.html", \
         "geojson": { "type": "FeatureCollection", "features": [ \
         { "geometry": { "type": "Point", "coordinates": [ \
-        %d,%d] }, "type": "Feature" } ] }, "objectType": "Place" } } } }' \
+        %s,%s] }, "type": "Feature" } ] }, "objectType": "Place" } } } }' \
          % (rating.author.email,rating.author.email,rating.stress,rating.latitude,rating.longitude)
 
 
@@ -213,7 +213,7 @@ class MainPage(webapp2.RequestHandler):
         "http://vocab.org/placetime/geopoint/wgs84/X-15.416497Y28.079203.html", \
         "geojson": { "type": "FeatureCollection", "features": [ \
         { "geometry": { "type": "Point", "coordinates": [ \
-        %d,%d] }, "type": "Feature" } ] }, "objectType": "Place" } } } }' \
+        %s,%s] }, "type": "Feature" } ] }, "objectType": "Place" } } } }' \
          % (rating.author.email,rating.author.email,rating.challenge,rating.latitude,rating.longitude)
 
         # xAPI statement Ability
@@ -233,7 +233,7 @@ class MainPage(webapp2.RequestHandler):
         "http://vocab.org/placetime/geopoint/wgs84/X-15.416497Y28.079203.html", \
         "geojson": { "type": "FeatureCollection", "features": [ \
         { "geometry": { "type": "Point", "coordinates": [ \
-        %d,%d] }, "type": "Feature" } ] }, "objectType": "Place" } } } }' \
+        %s,%s] }, "type": "Feature" } ] }, "objectType": "Place" } } } }' \
          % (rating.author.email,rating.author.email,rating.abilities,rating.latitude,rating.longitude)
 
         # xAPI statement Activity
@@ -253,7 +253,7 @@ class MainPage(webapp2.RequestHandler):
         "http://vocab.org/placetime/geopoint/wgs84/X-15.416497Y28.079203.html",\
         "geojson": { "type": "FeatureCollection", "features": \
         [ { "geometry": { "type": "Point", "coordinates":[ \
-        %d,%d] }, "type": "Feature" } ] }, "objectType": "Place" } } } }' \
+        %s,%s] }, "type": "Feature" } ] }, "objectType": "Place" } } } }' \
         % (rating.author.email,rating.author.email,rating.activity,rating.latitude,rating.longitude)
 
         message = mail.EmailMessage(sender="Learning Pulse <dnldimitri@gmail.com>", #"daniele.dimitri@ou.nl",

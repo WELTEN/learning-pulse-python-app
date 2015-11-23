@@ -43,7 +43,7 @@ timeframes = [7,8,9,10,11,12,13,14,15,16,17,18]
 todayNice = datetime.utcnow().strftime('%A %d, %b %Y') #e.g. Tuesday 03, Nov 2015]
 to = 1 # Time offset UTC+1 
 today = datetime.now() # dateobject 
-participants = ['ddm@ou.nl']
+participants = ['ddm@ou.nl','katerina.riviou@ou.nl','asu@ou.nl','mhx@ou.nl','gsv@ou.nl','zai@ou.nl','jkh@ou.nl','xjs@ou.nl','xai@ou.nl']
 defaultLat = 50
 defaultLong = 5
 
@@ -97,7 +97,7 @@ class MainPage(webapp2.RequestHandler):
                         listTimeframes += "<a href='#"+str(i+to)+"' class='list-group-item timeframe-rating'><span class='badge'>"+str(i+to)+ \
                         " - "+str(i+to+1)+" </span> Rate this timeframe</a>"
                     else:
-                        listTimeframes += "<a href='/delete?t="+str(i+to)+"' class='list-group-item list-group-item-success'  onclick='return confirm_delete()'>"+"<span class='badge'>"+ \
+                        listTimeframes += "<a href='' class='list-group-item list-group-item-success' >"+"<span class='badge'>"+ \
                         str(i+to)+" - "+str(i+to+1)+"</span> You rated this timeframe already</>"
                 elif i==currentHour:
                     listTimeframes += "<a href='#"+str(i+to)+"' class='list-group-item list-group-item-warning disabled'>"+"<span class='badge'>"+ \
@@ -363,6 +363,19 @@ class Login(webapp2.RequestHandler):
         else:
             self.redirect(users.create_login_url(self.request.uri))
 
+class ErrorHandler(webapp2.RequestHandler):
+    def get(self): 
+        user = users.get_current_user()
+        if user:
+            self.redirect('/rate')            
+        template_values = {
+                'user': user,
+                'url_linktext': url_linktext,
+                'today': todayNice,
+            }
+        template = JINJA_ENVIRONMENT.get_template('error.html')
+        self.response.write(template.render(template_values))
+
 
 class DeleteHandler(webapp2.RequestHandler):
     def get(self):
@@ -383,5 +396,6 @@ app = webapp2.WSGIApplication([
     ('/rate', MainPage),
     ('/viz', Visualisation),
     ('/delete', DeleteHandler),
+    ('/error', ErrorHandler),
     ('/joDKskOKufkwl39a3jwghga240ckaJEKRmcairtsDK', Reminder),
 ], debug=True)

@@ -40,7 +40,6 @@ JINJA_ENVIRONMENT = jinja2.Environment(
 DEFAULT_DASHBOARD_NAME = 'default_dashboard'
 
 timeframes = [7,8,9,10,11,12,13,14,15,16,17,18]  
-todayNice = datetime.utcnow().strftime('%A %d, %b %Y') #e.g. Tuesday 03, Nov 2015]
 to = 1 # Time offset UTC+1 
 today = datetime.now() # dateobject 
 participants = ['ddm@ou.nl','katerina.riviou@ou.nl','asu@ou.nl','mhx@ou.nl','gsv@ou.nl','zai@ou.nl','jkh@ou.nl','xjs@ou.nl','xai@ou.nl']
@@ -74,7 +73,8 @@ class Rating(ndb.Model):
 class MainPage(webapp2.RequestHandler):
     def get(self):
         dashboard_name = self.request.get('user', DEFAULT_DASHBOARD_NAME)  
-        currentHour = int(datetime.utcnow().strftime('%H')) #e.g. 9 
+        currentHour = int(datetime.now().strftime('%H')) #e.g. 9 
+        todayNice = datetime.now().strftime('%A %d, %b %Y') #e.g. Tuesday 03, Nov 2015]
         user = users.get_current_user()
         listTimeframes = ""
         if user:
@@ -83,7 +83,7 @@ class MainPage(webapp2.RequestHandler):
             
             for i in timeframes:
                 if i < currentHour:
-                    today = datetime.utcnow().strftime('%Y-%m-%d')
+                    today = datetime.now().strftime('%Y-%m-%d')
                     date_object = datetime.strptime(today, '%Y-%m-%d')
                     query = Rating.query(
                         ancestor=dashboard_key(dashboard_name),
@@ -98,7 +98,7 @@ class MainPage(webapp2.RequestHandler):
                         " - "+str(i+to+1)+" </span> Rate this timeframe</a>"
                     else:
                         listTimeframes += "<a href='' class='list-group-item list-group-item-success' >"+"<span class='badge'>"+ \
-                        str(i+to)+" - "+str(i+to+1)+"</span> You rated this timeframe already</>"
+                        str(i+to)+" - "+str(i+to+1)+"</span> You rated this timeframe already</a>"
                 elif i==currentHour:
                     listTimeframes += "<a href='#"+str(i+to)+"' class='list-group-item list-group-item-warning disabled'>"+"<span class='badge'>"+ \
                         str(i+to)+" - "+str(i+to+1)+"</span> Ongoing timeframe</a>"
@@ -273,11 +273,12 @@ class MainPage(webapp2.RequestHandler):
 class Visualisation(webapp2.RequestHandler):
     def get(self):
         dashboard_name = self.request.get('user', DEFAULT_DASHBOARD_NAME)
+        todayNice = datetime.now().strftime('%A %d, %b %Y') #e.g. Tuesday 03, Nov 2015]
         user = users.get_current_user()
         if user:
             url = users.create_logout_url(self.request.uri)
             url_linktext = 'Logout' 
-            today = datetime.utcnow().strftime('%Y-%m-%d')
+            today = datetime.now().strftime('%Y-%m-%d')
             date_object = datetime.strptime(today, '%Y-%m-%d')
             query = Rating.query(
                 ancestor=dashboard_key(dashboard_name),
@@ -331,11 +332,11 @@ class Reminder(webapp2.RequestHandler):
             full = json.loads(full_json)
             joke = full['value']['joke']
 
-            currentHour = int(datetime.utcnow().strftime('%H')) #e.g. 9 
+            currentHour = int(datetime.now().strftime('%H')) #e.g. 9 
             
             # Compse the message 
-            message = mail.EmailMessage(sender="Learning Pulse <dnldimitri@gmail.com>", #"daniele.dimitri@ou.nl",
-                            subject="It's time to rate your activity!")
+            message = mail.EmailMessage(sender="Learning Pulse <dnldimitri@gmail.com>", #"",
+                            subject="It's time to rate your activity")
             message.html = "<html> \
             <body style='font-family: Arial, sans-serif; font-size:11px; text-align:center;'> \
             <p style='font-family: Courier new, sans-serif; font-size:12px; margin:20px 0; \
@@ -366,6 +367,7 @@ class Login(webapp2.RequestHandler):
 class ErrorHandler(webapp2.RequestHandler):
     def get(self): 
         user = users.get_current_user()
+        todayNice = datetime.now().strftime('%A %d, %b %Y') #e.g. Tuesday 03, Nov 2015]
         if user:
             self.redirect('/rate')            
         template_values = {

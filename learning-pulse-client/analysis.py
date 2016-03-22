@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 
 #from google.appengine.ext import db
 
-project_id = "768792801399"
+project_id = "xxx"
 
 #Date boundaries today
 today = datetime.utcnow().strftime('%Y-%m-%d')

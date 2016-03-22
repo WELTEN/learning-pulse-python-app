@@ -17,7 +17,7 @@ import statsmodels.api as sm
 
 #  GLOBAL VARIABLES
 #**************************
-LRS_GBQid = "768792801399"
+LRS_GBQid = "xxx"
 LRS_xAPITable = "[xAPIStatements.xapiTableNew]"
 
 #Date boundaries today

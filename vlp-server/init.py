@@ -2,51 +2,22 @@
 """
 Created on Mon Mar 21 21:10:56 2016
 @author: Daniele Di Mitri ddm@ou.nl
-@title: plots.py
+@title: init.py
 """
-from settings_local import *
+from core import *
 
-import ratings
-import steps
-import heartrate
-import activities
-import weather
+start_first_experiment = '2015-11-23 07:00:00'
+end_first_experiment = '2015-12-09 20:00:00'
 
-def fetch_data(userid,start_date,end_date):
+for i in range (7,8):
+    # Fetch and transform User data from the Learning Record Store
+    dfUserData = fetchLRSdata(i,start_first_experiment,end_first_experiment)
+    # Smooth values
+    dfUserData = smoothValues(dfUserData)
+    # Activate VAR process
+    dfPredData = VARprocess(dfUserData)
+    # Save in BigQuery
+    dfPredData.to_gbq(PRSid, PRStable) 
+    
 
-    actorID =  "'mailto:arlearn"+str(user_id)+"@gmail.com'"  
-    
-    # Ratings
-    query = "SELECT *  FROM [xAPIStatements.xapiTableNew] WHERE " \
-        "origin = 'rating' AND actorID="+actorID+ \
-        " AND timestamp > PARSE_UTC_USEC('"+start_date+"') AND timestamp < " \
-        " PARSE_UTC_USEC('"+end_date+"') ORDER by timestamp"
-    dfRT = ratings.df_ratings(query)
-    
-    # Steps
-    query = "SELECT *  FROM [xAPIStatements.xapiTableNew] WHERE " \
-        "objectID = 'StepCount' AND actorID="+actorID+ \
-        " AND timestamp > PARSE_UTC_USEC('"+start_date+"') AND timestamp < " \
-        " PARSE_UTC_USEC('"+end_date+"') ORDER by timestamp"
-    dfSC = steps.df_steps(query)
-    
-    # Heart Rate
-    query = "SELECT *  FROM [xAPIStatements.xapiTableNew] WHERE " \
-        "objectID = 'HeartRate' AND actorID="+actorID+ \
-        " AND timestamp > PARSE_UTC_USEC('"+start_date+"') AND timestamp < " \
-        " PARSE_UTC_USEC('"+end_date+"') ORDER by timestamp"
-    dfHR = heartrate.df_heartrate(query) 
-    
-    # Activities
-    query = "SELECT *  FROM [xAPIStatements.xapiTableNew] WHERE " \
-        "origin = 'rescuetime' AND actorID="+actorID+ \
-        " AND timestamp > PARSE_UTC_USEC('"+start_date+"')  AND timestamp < " \
-        " PARSE_UTC_USEC('"+end_date+"') ORDER by timestamp"
-    dfAC = activities.df_activities(query)
-    
-    # Weather
-    dfWT = weather.df_weather(query)
-    
-    
-    
     

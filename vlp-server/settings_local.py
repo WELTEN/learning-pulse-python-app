@@ -13,12 +13,25 @@ from datetime import datetime, timedelta
 from scipy.stats import entropy
 from scipy import signal
 import statsmodels.api as sm
-
+import ConfigParser
 
 #  GLOBAL VARIABLES
 #**************************
-LRS_GBQid = "xxx"
-LRS_xAPITable = "[xAPIStatements.xapiTableNew]"
+
+# Get configuration file
+configParser = ConfigParser.RawConfigParser()
+configFilePath = r'/Users/daniele/Documents/VisualLearningPulse/code/settings.config'
+configParser.read(configFilePath)
+
+# Learning Record store id
+LRSid = configParser.get('vlp', 'lrs_id')
+# LRS tablename
+LRStable = configParser.get('vlp', 'lrs_table')
+# Prediction Record store id
+PRSid = configParser.get('vlp', 'prs_id')
+# LRS tablename
+LRStable = configParser.get('vlp', 'prs_table')
+
 
 #Date boundaries today
 today = datetime.utcnow().strftime('%Y-%m-%d')

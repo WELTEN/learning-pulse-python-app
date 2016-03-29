@@ -5,19 +5,32 @@ Created on Mon Mar 21 21:10:56 2016
 @title: init.py
 """
 from core import *
+import globe
+import plots
 
-start_first_experiment = '2015-11-23 07:00:00'
-end_first_experiment = '2015-12-09 20:00:00'
+# Import global names
+globe.setGlobalNames()
+
 
 for i in range (7,8):
     # Fetch and transform User data from the Learning Record Store
-    dfUserData = fetchLRSdata(i,start_first_experiment,end_first_experiment)
+    df = fetchLRSdata(i,globe.start_first_experiment,globe.end_first_experiment)
     # Smooth values
-    dfUserData = smoothValues(dfUserData)
+    df = df.loc[:, (df != 0).any(axis=0)]
+    df = smoothValues(df,True)
     # Activate VAR process
-    dfPredData = VARprocess(dfUserData)
+    window = 5 # number of timeframe to predict
+    
+    # Set the maximum number of attributes to be considered for VAR
+    no_attr = 10
+    # VAR process activation
+    results = VARprocess(df.ix[:,0:no_attr],False)
+    # predictions
+    forecasts = VARforecast(df.ix[:,0:no_attr],results,window,False)
+    # plot the estimators
+    posActivity = 0
+    plot = plots.plot_Feature_corr(df.ix[:,0:no_attr],results,posActivity)   
+    
     # Save in BigQuery
-    dfPredData.to_gbq(PRSid, PRStable) 
-    
-
-    
+    print "fake saving..."
+    #dfPredData.to_gbq(PRSid, PRStable) 

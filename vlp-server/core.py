@@ -6,34 +6,16 @@
 
 import numpy as np
 import pandas as pd
+import time
 #from datetime import datetime, timedelta
-import ConfigParser
-
+import globe
 import ratings
 import steps
 import heartrate
 import activities
 import weather
-
 from statsmodels.tsa.api import VAR
 
-
-#  GLOBAL VARIABLES
-#**************************
-
-# Get configuration file
-configParser = ConfigParser.RawConfigParser()
-configFilePath = r'/Users/daniele/Documents/VisualLearningPulse/code/settings.config'
-configParser.read(configFilePath)
-
-# Learning Record store id
-LRSid = configParser.get('vlp', 'lrs_id')
-# LRS tablename
-LRStable = configParser.get('vlp', 'lrs_table')
-# Prediction Record store id
-PRSid = configParser.get('vlp', 'prs_id')
-# LRS tablename
-PRStable = configParser.get('vlp', 'prs_table')
 
 
 #  CORE FUNCTIONS
@@ -48,28 +30,28 @@ def fetchLRSdata(userid,start_date,end_date):
     actorID =  "'mailto:arlearn"+str(userid)+"@gmail.com'"  
     
     # Ratings
-    query = "SELECT *  FROM "+LRStable+" WHERE " \
+    query = "SELECT *  FROM "+globe.LRStable+" WHERE " \
         "origin = 'rating' AND actorID="+actorID+ \
         " AND timestamp > PARSE_UTC_USEC('"+start_date+"') AND timestamp < " \
         " PARSE_UTC_USEC('"+end_date+"') ORDER by timestamp"
     dfRT = ratings.df_ratings(query)
     
     # Steps
-    query = "SELECT *  FROM "+LRStable+" WHERE " \
+    query = "SELECT *  FROM "+globe.LRStable+" WHERE " \
         "objectID = 'StepCount' AND actorID="+actorID+ \
         " AND timestamp > PARSE_UTC_USEC('"+start_date+"') AND timestamp < " \
         " PARSE_UTC_USEC('"+end_date+"') ORDER by timestamp"
     dfSC = steps.df_steps(query)
     
     # Heart Rate
-    query = "SELECT *  FROM "+LRStable+" WHERE " \
+    query = "SELECT *  FROM "+globe.LRStable+" WHERE " \
         "objectID = 'HeartRate' AND actorID="+actorID+ \
         " AND timestamp > PARSE_UTC_USEC('"+start_date+"') AND timestamp < " \
         " PARSE_UTC_USEC('"+end_date+"') ORDER by timestamp"
     dfHR = heartrate.df_heartrate(query) 
     
     # Activities
-    query = "SELECT *  FROM "+LRStable+" WHERE " \
+    query = "SELECT *  FROM "+globe.LRStable+" WHERE " \
         "origin = 'rescuetime' AND actorID="+actorID+ \
         " AND timestamp > PARSE_UTC_USEC('"+start_date+"')  AND timestamp < " \
         " PARSE_UTC_USEC('"+end_date+"') ORDER by timestamp"
@@ -84,26 +66,21 @@ def fetchLRSdata(userid,start_date,end_date):
     #/    MERGE          /
     #--------------------  
     # Add Ratings
-    #@todo ActivityType
-    DF = pd.concat([dfRT,dfSC,dfHR],axis=1)
-                    
-    # Fill the NULL values in Ratings BACKWARD
-    DF[['Abilities','Challenge','Productivity','Stress',
-        'ActivityType']].fillna(method='bfill',inplace=True)
+    DF = pd.concat([dfRT.resample('5Min').fillna(method='pad'),dfHR,dfSC],axis=1)
     
-    # Delete all the head values which are still NULL
-    DF = DF.dropna()
+    # The timeframes where there are no rating are DROPPED
+    DF =  DF.dropna()    
     
     # Join LEFT with the Activity data
     DF = DF.join(dfAC,how='left') #inner join method
+    DF = DF.loc[:, (DF != 0).any(axis=0)] # drop columns with all zeros
     
     # Join LEFT the weather data     
-    DF = DF.join(dfWT,how='left')
+    DF = DF.join(dfWT.resample('5Min').fillna(method='pad'),how='left')
     
-    # Fill the NULL values FORWARD
-    DF[['Temp',
-        'Humidity','Pressure','Conditions']].fillna(method='pad',inplace=True)
-    
+     # The timeframes where there is no RescueTime data are FILLED di0 
+    DF =  DF.fillna(0) 
+
     return DF
 
 
@@ -113,18 +90,23 @@ def fetchLRSdata(userid,start_date,end_date):
 # Input: non smoothed dataframe
 # Output: smoothed dataframe 
 #-------------------------------------    
-def smoothValues(df):
+def smoothValues(df,ignoreCategorical):
       
     span = 12  #Center of Mass com =  (span - 1)/2
     
     # helper dataframe
     dfEWMA = pd.DataFrame() 
     # The columns to smooth
-    dontSmoothCols = ['Abilities','Challenge','Productivity','Stress',
-        'ActivityType','Conditions']
-    # The columns not to smooth
-    smoothCols =  [col for col in df.columns if col not in dontSmoothCols]   
+    Y_names = ['Abilities','Challenge','Productivity','Stress','MainActivity']
     
+    X_namesCat = ['MainActivity','Conditions']
+   
+   # The columns not to smooth
+    if ignoreCategorical:    
+        X_names =  [col for col in df.columns if col not in (Y_names and X_namesCat)]   
+    else:
+        X_names =  [col for col in df.columns if col not in Y_names]   
+ 
     # Loop trhough each day and apply EWMA treating each day individually
     # Append the smoothed values in the helper dataframe dfEWMA
     for g in df.groupby([df.index.year,df.index.month,df.index.day]):
@@ -135,34 +117,42 @@ def smoothValues(df):
     # Fill the null values with 0
     dfEWMA.fillna(0,inplace=True)
     
-    df[smoothCols] = dfEWMA[smoothCols]
+    df[X_names] = dfEWMA[X_names]
     
     #Remove the cold start instances! i.e. when the instances Rescue Time data
     # all sums up to 0
-    df = df[(df[smoothCols].T!=0).any()]
+    df = df[(df[X_names].T!=0).any()]
     
     return df
     
-def VARprocess(df,window):
+def VARprocess(df,log):
     # Log transformation, relative difference and drop NULL values
-    dfLogDiff = np.log(df).diff().dropna()
+    if (log):    
+        dfLogDiff = np.log(df).diff().dropna()
+    else:
+        dfLogDiff = df
     # Vector Autoregression Process generation    
+    #print dfLogDiff
     VARmodel = VAR(dfLogDiff)
     # Model fitting 
     #@todo check lag order selection
-    results = VARmodel.fit(maxlags=15, ic='aic')
+    results = VARmodel.fit(maxlags=50, ic='aic')
+    return results
+    
+def VARforecast(df,results,window,log):
     lag_order = results.k_ar
     # Generate n prediction, where n is the window size, return array
-    forecasts = results.forecast(dfLogDiff.values[-lag_order:], window)
+    forecasts = results.forecast(df.values[-lag_order:], window)
     # Create the new index for the predictions
-    ixPred = pd.date_range(dfLogDiff[-1:].index.to_pydatetime()[0]
+    ixPred = pd.date_range(df[-1:].index.to_pydatetime()[0]
         .strftime("%Y-%m-%d %H:%M:%S"),periods=window+1,freq='5min')
-    ixPred = ixPred[-ixPred:] #delete the first which exists
+    ixPred = ixPred[-window:] #delete the first which exists
     # Generate a dataframe
     dfForecasts = pd.DataFrame(forecasts,index=ixPred,columns=df.columns.values)
     # Append the forecast to the original set, then add the header of the df
     # Invert the logarithmic scale and apply cumsum
-    dfReturn = np.exp(pd.concat([np.log(df)[:1],
-                                 dfLogDiff.append(dfForecasts)]).cumsum())
+    #dfReturn = np.exp(pd.concat([np.log(df)[:1],
+    #                             dfLogDiff.append(dfForecasts)]).cumsum())
+    dfReturn = df.append(dfForecasts)
+    return dfReturn
     
-    return dfReturn    

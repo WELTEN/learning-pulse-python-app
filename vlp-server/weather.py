@@ -4,7 +4,7 @@ Created on Mon Mar 21 14:45:37 2016
 @author: ddm@ou.nl
 @title: weather.py
 """
-from settings_local import *
+from core import *
 
 # --------------------
 #/    WEATHER        /

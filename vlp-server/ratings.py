@@ -4,8 +4,7 @@ Created on Mon Mar 21 14:45:37 2016
 @author: Daniele Di Mitri ddm@ou.nl
 @title: ratings.py
 """
-
-from settings_local import *
+from core import *
 
 # --------------------
 #/    RATINGS        /
@@ -31,7 +30,7 @@ def flowPoints(c):
 def df_ratings(query): 
     time1 = time.time()
     # Populating the dataframe 
-    RTframe = pd.read_gbq(query, LRS_GBQid) 
+    RTframe = pd.read_gbq(query, globe.LRSid) 
     # Filtering the results
     RTdf = RTframe[['timestamp','objectId','resultResponse','lat','lng']]
     #Rename the columns
@@ -47,21 +46,22 @@ def df_ratings(query):
     # Indicating the rating done at 9:00 for the 8:xx activities    
     RTrsh.index = RTrsh.index-pd.offsets.Hour(1)
     
+    # Activity Category
+    #@todo mapping main activity
+    actLegend = RTrsh['MainActivity']
+    RTrsh['MainActivity'] = RTrsh['MainActivity'].astype('category').cat.codes
+    
     # 1. First check for missing values and fill them backward
     # 2. Then check again and fill them forward (workaround for latest missing)
     # 3. Then cast to int
-    RTrsh[['Abilities','Challenge','Productivity','Stress']] = RTrsh[
-        ['Abilities','Challenge','Productivity','Stress']].fillna(method='bfill'
-        ).fillna(method='pad').astype(int) 
+    RTrsh = RTrsh.fillna(method='bfill').fillna(method='pad').astype(int) 
         
     # Calculate the Flow-Score - see function flowPoints for explaination   
     RTrsh['Flow'] = RTrsh.apply(flowPoints, axis=1)
-    RTrsh['FPS'] = RTrsh.apply(FPSscore, axis=1)
-    RTrsh['class'] = RTrsh.apply(FPSclass, axis=1)
     
     # The correlation between Flow and Productivity 
     #flowProdCorr = RTrsh[['Productivity','Flow']].corr().iloc[0]['Flow']
     time2 = time.time()  
-    print 'Ratings values read from BigQuery in %0.3f ms' % ((time2-time1)*1000)
+    print 'Ratings values read from BigQuery in %0.3f s' % ((time2-time1))
     
     return RTrsh

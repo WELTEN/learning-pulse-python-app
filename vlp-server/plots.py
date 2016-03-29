@@ -11,6 +11,8 @@ Created on Mon Mar 21 21:10:56 2016
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
+from itertools import chain, repeat
 
 # Assistant function to label points
 def label_point(x, y, val, ax):
@@ -44,7 +46,7 @@ def plot_FlowProd(df,user):
     plot.add_patch(flowZone)
     return plot 
     
-    # 3) Scatter Plot of the FPS score
+ # 3) Scatter Plot of the FPS score
 def plot_FlowFPS(df,user):     
     flowZone = plt.Polygon([(50,50), (75,105), (105,105), (105,75)],alpha=0.2) 
     plot =  df[['Abilities','Challenge','FPS']].plot(x='Abilities',
@@ -54,10 +56,25 @@ def plot_FlowFPS(df,user):
     plot.set_ylim(-5,105)
     plot.add_patch(flowZone) 
     return plot
-        
+    
+# 4) Scatter plot of the Productivity against the Flow    
 def plot_FlowProd_corr(df,user,corr):
-    # 4) Scatter plot of the Productivity against the Flow
     plot = "Flow vs Productivity of "+user+" (corr=%f)" % corr
     plot = sns.jointplot("Productivity", "Flow", data=df, kind="reg", 
                            color="b", xlim=(-5,105), ylim=(-5,105))
     return plot
+    
+# 5) Plot of the Feature correaltions     
+def plot_Feature_corr(df,results,fromFeauture):
+    posTarget = 5 
+    #the flow correlation matrix
+    d = dict(zip(df.columns[fromFeauture:], 
+                 chain(results.resid_corr[posTarget,fromFeauture:], 
+                       repeat(None))))          
+    nd = sorted(d.items(), key=lambda x: x[1],reverse=True)   
+    apps = zip(*nd)[0]
+    score = zip(*nd)[1]
+    x_pos = np.arange(len(apps))    
+    plt.bar(x_pos, score,align='center')
+    plt.xticks(x_pos, apps, rotation=70) 
+    plt.show()

@@ -5,7 +5,7 @@ Created on Mon Mar 21 14:45:37 2016
 @title: heart-rate.py
 """
 
-from settings_local import *
+from core import *
 
 # --------------------
 #/    HEART-RATE     /
@@ -64,17 +64,17 @@ hr_features = {
 def df_heartrate(query):
     
     time1 = time.time()
-    HRframe = pd.read_gbq(query, LRS_GBQid) # Populating the dataframe
+    HRframe = pd.read_gbq(query, globe.LRSid) # Populating the dataframe
     HRdf = HRframe[['timestamp','resultResponse']]
     signal = HRdf.set_index(['timestamp']).astype(int)  #timestamp as index    
     time2 = time.time()  
-    print 'Heart rate value read from BigQuery in %0.3f ms' % ((time2-time1)*1000)
+    print 'Heart rate value read from BigQuery in %0.1f s' % ((time2-time1))
     
     time1 = time.time()
     hr_df = pd.DataFrame()
     
     for group in signal.groupby([signal.index.year,signal.index.month,signal.index.day]):
-        hr_df = hr_featured.append(group[1].resample('5Min', how={'resultResponse': hr_features}))
+        hr_df = hr_df.append(group[1].resample('5Min', how={'resultResponse': hr_features}))
     time2 = time.time()
-    print 'Heart rate feature generation took %0.3f ms' % ((time2-time1)*1000)
-    return hr_df
+    print 'Heart rate feature generation took %0.1f s' % ((time2-time1))
+    return hr_df['resultResponse']

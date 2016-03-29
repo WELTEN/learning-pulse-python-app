@@ -9,11 +9,11 @@ Created on Mon Mar 21 14:45:37 2016
 #/    STEPS          /
 #--------------------
 
-from settings_local import *
+from core import *
 
 def df_steps(query):
     # Populating the dataframe
-    SCframe = pd.read_gbq(query, LRS_GBQid) 
+    SCframe = pd.read_gbq(query, globe.LRSid) 
      # Filtering the results 
     SCdf = SCframe[['timestamp','resultResponse']]  
     #timestamp as index

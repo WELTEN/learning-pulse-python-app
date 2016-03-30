@@ -12,7 +12,7 @@ import plots
 globe.setGlobalNames()
 
 
-for i in range (4,5):
+for i in range (7,8):
     # Fetch and transform User data from the Learning Record Store
     df = fetchLRSdata(i,globe.start_first_experiment,globe.end_first_experiment)
     # Smooth values

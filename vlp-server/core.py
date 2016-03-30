@@ -97,16 +97,14 @@ def smoothValues(df,ignoreCategorical):
     # helper dataframe
     dfEWMA = pd.DataFrame() 
     # The columns to smooth
-    Y_names = ['Abilities','Challenge','Productivity','Stress','MainActivity']
+    Y_names = ['Abilities','Challenge','Productivity','Stress', 'Flow', 
+               'MainActivity']
     
     X_namesCat = ['MainActivity','Conditions']
    
-   # The columns not to smooth
-    if ignoreCategorical:    
-        X_names =  [col for col in df.columns if col not in (Y_names and X_namesCat)]   
-    else:
-        X_names =  [col for col in df.columns if col not in Y_names]   
- 
+    # The columns not to smooth
+    toSmooth = [col for col in df.columns if col not in (Y_names or X_namesCat)]
+  
     # Loop trhough each day and apply EWMA treating each day individually
     # Append the smoothed values in the helper dataframe dfEWMA
     for g in df.groupby([df.index.year,df.index.month,df.index.day]):
@@ -117,11 +115,14 @@ def smoothValues(df,ignoreCategorical):
     # Fill the null values with 0
     dfEWMA.fillna(0,inplace=True)
     
-    df[X_names] = dfEWMA[X_names]
-    
+    df[toSmooth] = dfEWMA[toSmooth]
+
     #Remove the cold start instances! i.e. when the instances Rescue Time data
     # all sums up to 0
-    df = df[(df[X_names].T!=0).any()]
+    df = df[(df[toSmooth].T!=0).any()]
+    
+    if ignoreCategorical:
+        df =  df[[col for col in df.columns if col not in X_namesCat]]
     
     return df
     

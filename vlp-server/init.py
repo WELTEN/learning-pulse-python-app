@@ -20,16 +20,17 @@ for i in range (7,8):
     df = smoothValues(df,True)
     # Activate VAR process
     window = 5 # number of timeframe to predict
-    
     # Set the maximum number of attributes to be considered for VAR
-    no_attr = 10
+    no_attr = 40    
     # VAR process activation
     results = VARprocess(df.ix[:,0:no_attr],False)
     # predictions
     forecasts = VARforecast(df.ix[:,0:no_attr],results,window,False)
     # plot the estimators
-    posActivity = 0
-    plot = plots.plot_Feature_corr(df.ix[:,0:no_attr],results,posActivity)   
+    posActivity = 5
+    plot = plots.plot_Residual_corr(df.ix[:,0:no_attr],results,4,posActivity)   
+    
+    print results.tvalues.ix[:,4]
     
     # Save in BigQuery
     print "fake saving..."

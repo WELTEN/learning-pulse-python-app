@@ -64,9 +64,8 @@ def plot_FlowProd_corr(df,user,corr):
                            color="b", xlim=(-5,105), ylim=(-5,105))
     return plot
     
-# 5) Plot of the Feature correaltions     
-def plot_Feature_corr(df,results,fromFeauture):
-    posTarget = 5 
+# 5) Plot of the Residual correaltions     
+def plot_Residual_corr(df,results,posTarget,fromFeauture):
     #the flow correlation matrix
     d = dict(zip(df.columns[fromFeauture:], 
                  chain(results.resid_corr[posTarget,fromFeauture:], 

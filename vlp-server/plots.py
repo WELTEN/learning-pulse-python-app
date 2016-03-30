@@ -75,5 +75,5 @@ def plot_Residual_corr(df,results,posTarget,fromFeauture):
     score = zip(*nd)[1]
     x_pos = np.arange(len(apps))    
     plt.bar(x_pos, score,align='center')
-    plt.xticks(x_pos, apps, rotation=70) 
+    plt.xticks(x_pos, apps, rotation=90) 
     plt.show()

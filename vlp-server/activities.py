@@ -24,6 +24,7 @@ def df_activities(query):
     # Fill null values
     ACrsh = ACrsh.fillna(0)
     ACrsh = ACrsh[ACrsh.sum().sort_values(ascending=False).index.tolist()]
+    ACrsh = ACrsh.loc[:,ACrsh.var()>10]         
     time2 = time.time()  
     print 'Activity values read from BigQuery in %0.1f s' % ((time2-time1))
     return ACrsh

@@ -7,6 +7,7 @@
 import numpy as np
 import pandas as pd
 import time
+import operator
 #from datetime import datetime, timedelta
 import globe
 import ratings
@@ -15,7 +16,7 @@ import heartrate
 import activities
 import weather
 from statsmodels.tsa.api import VAR
-
+import sys
 
 
 #  CORE FUNCTIONS
@@ -126,19 +127,34 @@ def smoothValues(df,ignoreCategorical):
     
     return df
     
-def VARprocess(df,log):
+def VARprocess(df,log=False):
     # Log transformation, relative difference and drop NULL values
     if (log):    
-        dfLogDiff = np.log(df).diff().dropna()
-    else:
-        dfLogDiff = df
-    # Vector Autoregression Process generation    
-    #print dfLogDiff
-    VARmodel = VAR(dfLogDiff)
-    # Model fitting 
-    #@todo check lag order selection
-    results = VARmodel.fit(maxlags=50, ic='aic')
-    return results
+        df = np.log(df+0.1).diff().dropna()
+    # Vector Autoregression Process generation     
+    maxAttr = len(df.columns) 
+    # Find the right lag order
+    orderFound = False
+    while orderFound!=True:   
+        try:
+            model = VAR(df.ix[:,0:maxAttr])
+            order = model.select_order() 
+            orderFound = True
+        except:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            if str(exc_obj)=="data already contains a constant.":
+                maxAttr = maxAttr - 1
+            else:
+                maxAttr = int(str(exc_obj).split("-th")[0])-1
+            print "Exception, reducing to n_attributes ",maxAttr
+            orderFound = False
+ 
+    n_lags = max(order.iteritems(), key=operator.itemgetter(1))[1]
+    method = max(order.iteritems(), key=operator.itemgetter(1))[0]
+    print "n_lags ",n_lags
+    print "method ",method    
+    results = model.fit(maxlags=n_lags, ic=method)
+    return results,maxAttr
     
 def VARforecast(df,results,window,log):
     lag_order = results.k_ar
@@ -152,8 +168,10 @@ def VARforecast(df,results,window,log):
     dfForecasts = pd.DataFrame(forecasts,index=ixPred,columns=df.columns.values)
     # Append the forecast to the original set, then add the header of the df
     # Invert the logarithmic scale and apply cumsum
-    #dfReturn = np.exp(pd.concat([np.log(df)[:1],
-    #                             dfLogDiff.append(dfForecasts)]).cumsum())
-    dfReturn = df.append(dfForecasts)
+    if (log):     
+        dfReturn = np.exp(pd.concat([np.log(df)[:1],
+                                 df.append(dfForecasts)]).cumsum())-0.1
+    else:
+        dfReturn = df.append(dfForecasts)
     return dfReturn
     

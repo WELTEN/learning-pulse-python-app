@@ -1,0 +1,7 @@
+cron:
+- description: reminder to rate
+  url: /joDKskOKufkwl39a3jwghga240ckaJEKRmcairtsDK
+  schedule: every 60 minutes from 07:00 to 18:59
+- description: download weather data
+  url: /weather
+  schedule: every 10 minutes from 07:00 to 18:59

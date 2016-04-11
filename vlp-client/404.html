@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+  <head>
+    <title>Error ~ Learning Pulse </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="static/favicon.ico" />
+    <link rel="icon" type="image/png" href="static/favicon.png" />
+    <link rel="manifest" href="static/manifest.json" />
+
+    <!-- Bootstrap -->
+    <link href="static/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="static/bootstrap-slider.css" rel="stylesheet" media="screen">
+    <link href="static/bootstrap-switch.css" rel="stylesheet" media="screen">
+    <link href="static/custom.css" rel="stylesheet" media="screen">
+    <!-- GoRoost -->
+    <!--<script src='//cdn.goroost.com/roostjs/kuypylxkqrk0q5izfwxqi23mvrbtsxos' async></script>-->
+  </head>
+  <body>
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container"> 
+
+        <div class="navbar-header">
+          <a class="navbar-brand" href="/rate" style="padding:0 15px 0 0;"><img src="static/favicon.png" alt="Learning Pulse" style="width:36px; margin:3px 20px 0; display:inline;" />LearningPulse</a>
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+        <div id="navbar-main" class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+                <li>
+                    <a href="/rate">Rate</a>
+                </li>
+                <li>
+                    <a href="/viz">Viz</a>
+                </li>
+            </ul>
+            <div class="pull-right">
+              <strong style="color:white; padding:15px 5px; display:block; ">{{today}}</strong>
+            </div>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-12 box-container">
+          <!--<h3>Activity Rating Tool</h3><hr>-->
+          <div class="panel panel-default">
+            <div class="panel-heading"><strong>Error</strong></div>
+            <div class="panel-body">
+              There was an authentication error, you need to Login by using this link {{ url_linktext }}
+            </div>
+          </div>
+        </div>
+      </div>
+    <p class="text-center text-white"><strong>LearningPulse</strong> - Welten Institute 2015 - <a href="{{ url|safe }}">{{ url_linktext }}</a></p>
+    </div> <!-- /container -->
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script src="static/bootstrap.min.js"></script>
+    <script src="static/geolocation.js"></script>
+  </body>
+</html>
+</html>
+{% endautoescape %}

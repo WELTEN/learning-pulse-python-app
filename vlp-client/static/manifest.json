@@ -1,0 +1,12 @@
+{  
+  "name": "Push reminder",  
+  "short_name": "Push reminder",  
+  "icons": [{  
+        "src": "favicon.png",  
+        "sizes": "192x192",
+        "type": "image/png"
+      }],  
+  "start_url": "/rate",  
+  "display": "standalone",  
+  "gcm_sender_id": "815835684542"
+}

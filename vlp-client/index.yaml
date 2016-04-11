@@ -1,0 +1,22 @@
+indexes:
+
+- kind: Rating
+  ancestor: yes
+  properties:
+  - name: author.email
+  - name: timeframe
+  - name: date
+
+- kind: Rating
+  ancestor: yes
+  properties:
+  - name: author.email
+  - name: date
+
+- kind: Rating
+  properties:
+  - name: author.email
+  - name: date
+    direction: desc
+
+

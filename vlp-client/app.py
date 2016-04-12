@@ -105,7 +105,7 @@ class MainPage(webapp2.RequestHandler):
                         listTimeframes += "<a href='#"+str(act_i)+"' class='list-group-item timeframe-rating'><span class='badge'>"+str(act_i)+ \
                         " - "+str(act_i+1)+" </span> Rate this timeframe</a>"
                     else:
-                        listTimeframes += "<a href='' class='list-group-item list-group-item-success' >"+"<span class='badge'>"+ \
+                        listTimeframes += "<a href='/delete?t="+str(act_i)+"' class='list-group-item list-group-item-success' onclick='confirm_delete()' >"+"<span class='badge'>"+ \
                         str(act_i)+" - "+str(act_i+1)+"</span> You rated this timeframe already</a>"
                 elif i==currentHour:
                     listTimeframes += "<a href='#"+str(act_i)+"' class='list-group-item list-group-item-warning disabled'>"+"<span class='badge'>"+ \

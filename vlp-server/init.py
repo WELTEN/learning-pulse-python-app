@@ -32,3 +32,12 @@ for i in range (7,8):
     # Save in BigQuery
     print "fake saving..."
     #dfPredData.to_gbq(PRSid, PRStable) 
+    
+    #forecast
+    """    
+    results,maxAttr = VARprocess(df.ix[:,0:13],log=False)
+    # predictions
+    window = 5 # number of timeframe to predict
+    forecasts = VARforecast(df.ix[:,0:maxAttr],results,window,False)
+    forecasts.ix[-15:,:].plot()
+    """

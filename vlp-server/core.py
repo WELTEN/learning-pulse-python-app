@@ -35,6 +35,7 @@ def fetchLRSdata(userid,start_date,end_date):
         "origin = 'rating' AND actorID="+actorID+ \
         " AND timestamp > PARSE_UTC_USEC('"+start_date+"') AND timestamp < " \
         " PARSE_UTC_USEC('"+end_date+"') ORDER by timestamp"
+    print query
     dfRT = ratings.df_ratings(query)
     
     # Steps
@@ -174,4 +175,11 @@ def VARforecast(df,results,window,log):
     else:
         dfReturn = df.append(dfForecasts)
     return dfReturn
+
+def elasticNet(X_train,y_train):
     
+    enet = ElasticNet(alpha=0.1, l1_ratio=0.7)
+    y_pred_enet = enet.fit(X_train, y_train).predict(X_test)
+    r2_score_enet = r2_score(y_test, y_pred_enet)
+   
+    return enet.coef_,r2_score_enet

@@ -30,3 +30,6 @@ def setGlobalNames():
     
     start_first_experiment = '2015-11-23 07:00:00'
     end_first_experiment = '2015-12-09 20:00:00'
+    
+    start_second_experiment = '2016-04-11 07:00:00'
+    end_second_experiment = '2016-04-23 20:00:00'

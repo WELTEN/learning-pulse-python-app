@@ -17,7 +17,7 @@ import activities
 import weather
 from statsmodels.tsa.api import VAR
 import sys
-
+from pandas.io import gbq
 
 #  CORE FUNCTIONS
 #**************************
@@ -35,7 +35,6 @@ def fetchLRSdata(userid,start_date,end_date):
         "origin = 'rating' AND actorID="+actorID+ \
         " AND timestamp > PARSE_UTC_USEC('"+start_date+"') AND timestamp < " \
         " PARSE_UTC_USEC('"+end_date+"') ORDER by timestamp"
-    print query
     dfRT = ratings.df_ratings(query)
     
     # Steps
@@ -57,7 +56,7 @@ def fetchLRSdata(userid,start_date,end_date):
         "origin = 'rescuetime' AND actorID="+actorID+ \
         " AND timestamp > PARSE_UTC_USEC('"+start_date+"')  AND timestamp < " \
         " PARSE_UTC_USEC('"+end_date+"') ORDER by timestamp"
-    dfAC = activities.df_activities(query)
+    dfAC,dfCA = activities.df_activities(query)
     
     # Weather
     #@todo need to change this method
@@ -72,14 +71,14 @@ def fetchLRSdata(userid,start_date,end_date):
     
     # The timeframes where there are no rating are DROPPED
     DF =  DF.dropna()    
-    
-    # Join LEFT with the Activity data
-    DF = DF.join(dfAC,how='left') #inner join method
-    DF = DF.loc[:, (DF != 0).any(axis=0)] # drop columns with all zeros
-    
+
     # Join LEFT the weather data     
     DF = DF.join(dfWT.resample('5Min').fillna(method='pad'),how='left')
     
+    # Join LEFT with the Activity data
+    DF = DF.join(dfCA,how='left') #inner join method
+    DF = DF.loc[:, (DF != 0).any(axis=0)] # drop columns with all zeros
+  
      # The timeframes where there is no RescueTime data are FILLED di0 
     DF =  DF.fillna(0) 
 
@@ -155,9 +154,9 @@ def VARprocess(df,log=False):
     print "n_lags ",n_lags
     print "method ",method    
     results = model.fit(maxlags=n_lags, ic=method)
-    return results,maxAttr
+    return results
     
-def VARforecast(df,results,window,log):
+def VARforecast(df,results,window,log=False):
     lag_order = results.k_ar
     # Generate n prediction, where n is the window size, return array
     forecasts = results.forecast(df.values[-lag_order:], window)
@@ -170,16 +169,9 @@ def VARforecast(df,results,window,log):
     # Append the forecast to the original set, then add the header of the df
     # Invert the logarithmic scale and apply cumsum
     if (log):     
-        dfReturn = np.exp(pd.concat([np.log(df)[:1],
-                                 df.append(dfForecasts)]).cumsum())-0.1
+        df = np.log(df+0.1).diff().dropna()
+        dfReturn = (np.exp(pd.concat([df,
+                                 df.append(dfForecasts)])).cumsum())-0.1
     else:
         dfReturn = df.append(dfForecasts)
     return dfReturn
-
-def elasticNet(X_train,y_train):
-    
-    enet = ElasticNet(alpha=0.1, l1_ratio=0.7)
-    y_pred_enet = enet.fit(X_train, y_train).predict(X_test)
-    r2_score_enet = r2_score(y_test, y_pred_enet)
-   
-    return enet.coef_,r2_score_enet

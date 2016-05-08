@@ -43,8 +43,8 @@ DEFAULT_DASHBOARD_NAME = 'default_dashboard'
 timeframes = [6,7,8,9,10,11,12,13,14,15,16,17,18,19]  
 to = 1 # Time offset UTC+1 
 today = datetime.now() # dateobject 
-#participants = ['ddm@ou.nl']
-participants = ['ddm@ou.nl','Alessandra.Antonaci@ou.nl','Angel.Suarez@ou.nl','bibeg.limbu@ou.nl','Grigorij.Saveski@ou.nl','helen.korving@ou.nl','Ioannis.Zaimidis@ou.nl','Katerina.Riviou@ou.nl','kevin.ackermans@ou.nl','Maartje.Henderikx@ou.nl','martine.schophuizen@ou.nl']
+participants = ['ddm@ou.nl']
+#participants = ['ddm@ou.nl','Alessandra.Antonaci@ou.nl','Angel.Suarez@ou.nl','bibeg.limbu@ou.nl','Grigorij.Saveski@ou.nl','helen.korving@ou.nl','Ioannis.Zaimidis@ou.nl','Katerina.Riviou@ou.nl','kevin.ackermans@ou.nl','Maartje.Henderikx@ou.nl','martine.schophuizen@ou.nl']
 
 defaultLat = 50
 defaultLong = 5
@@ -319,12 +319,13 @@ class Reminder(webapp2.RequestHandler):
         if (weekday<5): #This control limits blocks the emails on Sat and Sun
             # These code snippets use an open-source library. http://unirest.io/python
             
-            response = unirest.get("https://webknox-jokes.p.mashape.com/jokes/oneLiner",
-              headers={
-                "X-Mashape-Key": "CC9qExPz1xmshMlClnCaQArQh3nip1PTsqYjsnP2aOar9pQfTx"
-              }
-            )
-            joke = response.body['text']
+            #response = unirest.get("https://webknox-jokes.p.mashape.com/jokes/oneLiner",
+            #  headers={
+            #    "X-Mashape-Key": "CC9qExPz1xmshMlClnCaQArQh3nip1PTsqYjsnP2aOar9pQfTx"
+            #  }
+            #)
+            #joke = response.body['text']
+            joke = "na"
             
             currentHour = int(datetime.now().strftime('%H'))+1 #e.g. 9
             # Compse the message 
@@ -337,7 +338,7 @@ class Reminder(webapp2.RequestHandler):
             # Loop through the email array Participants and send an email
             for email in participants:
                 message.to = email
-                message.send()
+                #message.send()
 
 class Login(webapp2.RequestHandler):
     def get(self): 
@@ -412,4 +413,5 @@ app = webapp2.WSGIApplication([
     ('/error', ErrorHandler),
     ('/weather', WeatherDownload),
     ('/joDKskOKufkwl39a3jwghga240ckaJEKRmcairtsDK', Reminder),
+    ('/syncbq', SyncBigQuery),
 ], debug=True)

@@ -4,7 +4,6 @@ Created on Mon Mar 21 14:45:37 2016
 @author: Daniele Di Mitri ddm@ou.nl
 @title: ratings.py
 """
-import core
 from core import *
 
 # --------------------
@@ -27,46 +26,30 @@ def flowPoints(c):
     d = float(c['Abilities']+c['Challenge'])/2
     return int(n*d/100)
 
-def activityToId(col):
-    #activities = {'reading': '1','writing':'2','meeting': '3', 
-    #'communication': '4','other': '5'}
-    #col = col.map(activities)
-    return col.replace(to_replace=['reading','writing','meeting','communication','other'],
-                              value=['1','2','3','4','5'], regex=True).astype(int)
 
 def df_ratings(query): 
     time1 = time.time()
     # Populating the dataframe 
     RTframe = pd.read_gbq(query, globe.LRSid) 
-
-    # Filtering the results   
-    RTdf = RTframe[['timestamp','objectId','resultResponse','actorId']]
-    
+    # Filtering the results
+    RTdf = RTframe[['timestamp','objectId','resultResponse','lat','lng']]
     #Rename the columns
     RTdf.rename(columns={'objectId':'Indicators'}, inplace=True)
-    RTdf.rename(columns={'resultResponse':'value'}, inplace=True)
+    RTdf.rename(columns={'resultResponse':'value'}, inplace=True)    
+    #Reshape the DataFrame
+    RTrsh = RTdf.set_index(['timestamp','Indicators'])['value']
+    # In case of duplicates     
+    RTrsh = RTrsh.drop(RTrsh.index.get_duplicates())
+    RTrsh = RTrsh.unstack() 
     
-    #Drop the entries which are exactely identical
-    RTdf = RTdf.drop_duplicates()
-    
-    #Drop the duplicate ratings (not indentical), take the last
-    RTdf = RTdf.set_index(['timestamp','actorId','Indicators']).sort_index()
-    RTdf = RTdf.groupby(level=RTdf.index.names).last().reset_index()
-    
-    RTrsh = pd.pivot_table(RTdf, values='value',
-                          index=['timestamp','actorId'],
-                           columns=['Indicators'],aggfunc=lambda x:x)        
-    RTrsh.reset_index(inplace=True)
     # Fix: the index will shift -1 hr. E.g. 9:00 -> 8:00 
-    # Indicating the rating done at 9:00 for the 8:xx activities
-    RTrsh.timestamp = RTrsh.timestamp - pd.offsets.Hour(1)
-    # Retstrict to the arlearn value
-    RTrsh = core.emailToId(RTrsh,'actorId')
-    RTrsh['timeframe'] = RTrsh.timestamp.map(lambda x: x.strftime('%H')).astype(int)       
-    RTrsh.set_index(['timestamp','actorId'], inplace=True)
-    RTrsh = RTrsh.dropna()                
+    # Indicating the rating done at 9:00 for the 8:xx activities    
+    RTrsh.index = RTrsh.index-pd.offsets.Hour(1)
     
-    RTrsh['MainActivity'] = activityToId(RTrsh['MainActivity'])
+    # Activity Category
+    #@todo mapping main activity
+    actLegend = RTrsh['MainActivity']
+    RTrsh['MainActivity'] = RTrsh['MainActivity'].astype('category').cat.codes
     
     # 1. First check for missing values and fill them backward
     # 2. Then check again and fill them forward (workaround for latest missing)
@@ -75,9 +58,6 @@ def df_ratings(query):
         
     # Calculate the Flow-Score - see function flowPoints for explaination   
     RTrsh['Flow'] = RTrsh.apply(flowPoints, axis=1)
-    
-    #Create 5 minutes intervals
-    RTrsh = RTrsh.unstack().fillna(-1).resample('5Min').fillna(method='pad').stack().replace(-1,np.NaN)
     
     # The correlation between Flow and Productivity 
     #flowProdCorr = RTrsh[['Productivity','Flow']].corr().iloc[0]['Flow']

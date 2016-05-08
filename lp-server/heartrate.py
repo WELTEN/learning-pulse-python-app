@@ -4,7 +4,7 @@ Created on Mon Mar 21 14:45:37 2016
 @author: ddm@ou.nl
 @title: heart-rate.py
 """
-import core
+
 from core import *
 
 # --------------------
@@ -58,24 +58,23 @@ hr_features = {
 #   'hr_ain':  _argmin          # Loc in index of the Min
 }    
 
+# Fuction name: df_heartrate 
+# Input: querystring to retrieve the full signal
+# Output: PD dataframe with 5 minute discretised intervals with all the features 
 def df_heartrate(query):
-    """
-    # Input: querystring to retrieve the full signal
-    # Output: PD dataframe with 5 minute discretised intervals with all the features 
-    """
+    
     time1 = time.time()
     HRframe = pd.read_gbq(query, globe.LRSid) # Populating the dataframe
-    HRdf = HRframe[['timestamp','resultResponse','actorId']]
-    HRrsh = core.emailToId(HRdf,'actorId')
-    HRrsh.set_index(['timestamp','actorId'], inplace=True)
-    HRrsh.resultResponse = HRrsh.resultResponse.astype(int)  
-    HRrsh = HRrsh.groupby([pd.TimeGrouper('5Min',level=0), 
-                       HRrsh.index.get_level_values('actorId')]).agg({'resultResponse': {
-    'hr_mean':  np.mean,        # Mean of the signal
-    'hr_max':   np.max,         # Maximum
-    'hr_min':   np.min,         # Minimum
-    'hr_std':   np.std,
-    'hr_avc':   avg_change }})['resultResponse']
+    HRdf = HRframe[['timestamp','resultResponse']]
+    signal = HRdf.set_index(['timestamp']).astype(int)  #timestamp as index    
+    time2 = time.time()  
+    print 'Heart rate value read from BigQuery in %0.1f s' % ((time2-time1))
+    
+    time1 = time.time()
+    hr_df = pd.DataFrame()
+    
+    for group in signal.groupby([signal.index.year,signal.index.month,signal.index.day]):
+        hr_df = hr_df.append(group[1].resample('5Min', how={'resultResponse': hr_features}))
     time2 = time.time()
     print 'Heart rate feature generation took %0.1f s' % ((time2-time1))
-    return HRrsh
+    return hr_df['resultResponse']

@@ -5,3 +5,9 @@ cron:
 - description: download weather data
   url: /weather
   schedule: every 10 minutes from 07:00 to 18:59
+- description: sync BigQuery
+  url: http://learning-pulse.appspot.com/syncBigQuery
+  schedule: every 10 minutes
+- description: sync BigQuery
+  url: http://learning-pulse.appspot.com/importers
+  schedule: every 10 minutes

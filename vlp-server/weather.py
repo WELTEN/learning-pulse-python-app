@@ -44,7 +44,9 @@ def df_weather(query):
     time1 = time.time()
     WTframe = pd.read_gbq(query, globe.PRSid) 
     WTdf = WTframe[['date','status','user']] 
+    
     WTrsh = core.emailToId(WTdf,'user')
+
     WTrsh['status'] = WTrsh['status'].replace({"u'":"'","'":'"'}, regex=True)
     WTrsh['lat'], WTrsh['lng'], WTrsh['weatherId'], WTrsh['pressure'],\
     WTrsh['temp'],WTrsh['humidity'] = zip(*WTrsh['status'].map(jsonToDF))

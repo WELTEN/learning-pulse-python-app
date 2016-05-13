@@ -193,11 +193,11 @@ def VARprocess(df,log=False):
             orderFound = True
         except:
             exc_type, exc_obj, exc_tb = sys.exc_info()
-            if str(exc_obj)=="data already contains a constant.":
-                maxAttr = maxAttr - 1
-            else:
-                maxAttr = int(str(exc_obj).split("-th")[0])-1
-            print "Exception, reducing to n_attributes ",maxAttr
+            #if str(exc_obj)=="data already contains a constant.":
+            maxAttr = maxAttr - 1
+            #else:
+            #maxAttr = int(str(exc_obj).split("-th")[0])-1
+            #print "Exception, reducing to n_attributes ",maxAttr
             orderFound = False
  
     n_lags = max(order.iteritems(), key=operator.itemgetter(1))[1]
@@ -224,18 +224,17 @@ def VARforecast(df,results,window,log=False):
         dfReturn = (np.exp(pd.concat([df,
                                  df.append(dfForecasts)])).cumsum())-0.1
     else:
-        dfReturn = df.append(dfForecasts)
+        dfReturn = dfForecasts
     return dfReturn
 
-
 def emailToId(df,col):
-    df[col] = df[col].replace(to_replace=['mailto:maartjesean@gmail.com'],
-                              value='arlearn7@gmail.com', regex=True)
-    df[col] = df[col].replace(to_replace=['mailto:bibeglimbu@gmail.com'],
-                              value='arlearn4@gmail.com', regex=True) 
+    df[col] = df[col].str.replace('mailto:maartjesean@gmail.com' , 'mailto:arlearn7@gmail.com')
+    df[col] = df[col].str.replace('mailto:bibeglimbu@gmail.com' , 'mailto:arlearn4@gmail.com')
     df = df[df[col].str.contains(r'arlearn')]
-    df[col] = df[col].replace(to_replace=['mailto:arlearn','arlearn',
-                            '@gmail.com'], value='', regex=True).astype(int) 
+    df[col] = df[col].str.replace('mailto:arlearn' , '')
+    df[col] = df[col].str.replace('arlearn' , '')
+    df[col] = df[col].str.replace('@gmail.com' , '')
+    df[col] = df[col].astype(int) 
     return df
     
 def nowFlow():
@@ -247,3 +246,8 @@ def nowFlow():
         return -1
     else:
         return int(df.Flow[0])
+   
+def flowPoints(c): 
+    n = 100-abs(c['Abilities']-c['Challenge'])
+    d = float(c['Abilities']+c['Challenge'])/2
+    return int(n*d/100)

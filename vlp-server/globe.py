@@ -15,7 +15,8 @@ def setGlobalNames():
     global LRSid 
     global LRStable
     global PRSid 
-    global PRStable
+    global PRSforecast
+    global PRShistory
     global weather_table
     global start_first_experiment
     global end_first_experiment
@@ -36,7 +37,8 @@ def setGlobalNames():
     weather_table = configParser.get('vlp', 'weather_table') # LRS tablename    
     
     PRSid = configParser.get('vlp', 'prs_id') # Prediction Record store id
-    PRStable = configParser.get('vlp', 'prs_table') # PRS tablename
+    PRSforecast = configParser.get('vlp', 'prs_forecast') # PRS tablename
+    PRShistory = configParser.get('vlp', 'prs_history') # PRS tablename
     
     start_first_experiment = '2015-11-23 07:00:00'
     end_first_experiment = '2015-12-09 20:00:00'

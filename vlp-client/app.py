@@ -40,11 +40,11 @@ JINJA_ENVIRONMENT = jinja2.Environment(
 
 DEFAULT_DASHBOARD_NAME = 'default_dashboard'
 
-timeframes = [6,7,8,9,10,11,12,13,14,15,16,17,18,19]  
+timeframes = [6,7,8,9,10,11,12,13,14,15,16,17]  
 to = 1 # Time offset UTC+1 
 today = datetime.now() # dateobject 
-participants = ['ddm@ou.nl']
-#participants = ['ddm@ou.nl','Alessandra.Antonaci@ou.nl','Angel.Suarez@ou.nl','bibeg.limbu@ou.nl','Grigorij.Saveski@ou.nl','helen.korving@ou.nl','Ioannis.Zaimidis@ou.nl','Katerina.Riviou@ou.nl','kevin.ackermans@ou.nl','Maartje.Henderikx@ou.nl','martine.schophuizen@ou.nl']
+#participants = ['ddm@ou.nl']
+participants = ['ddm@ou.nl','Alessandra.Antonaci@ou.nl','Angel.Suarez@ou.nl','bibeg.limbu@ou.nl','Grigorij.Saveski@ou.nl','Ioannis.Zaimidis@ou.nl','Katerina.Riviou@ou.nl','kevin.ackermans@ou.nl','Maartje.Henderikx@ou.nl','martine.schophuizen@ou.nl']
 
 defaultLat = 50
 defaultLong = 5
@@ -319,12 +319,12 @@ class Reminder(webapp2.RequestHandler):
         if (weekday<5): #This control limits blocks the emails on Sat and Sun
             # These code snippets use an open-source library. http://unirest.io/python
             
-            #response = unirest.get("https://webknox-jokes.p.mashape.com/jokes/oneLiner",
-            #  headers={
-            #    "X-Mashape-Key": "CC9qExPz1xmshMlClnCaQArQh3nip1PTsqYjsnP2aOar9pQfTx"
-            #  }
-            #)
-            #joke = response.body['text']
+            response = unirest.get("https://webknox-jokes.p.mashape.com/jokes/oneLiner",
+              headers={
+                "X-Mashape-Key": "CC9qExPz1xmshMlClnCaQArQh3nip1PTsqYjsnP2aOar9pQfTx"
+              }
+            )
+            joke = response.body['text']
             joke = "na"
             
             currentHour = int(datetime.now().strftime('%H'))+1 #e.g. 9
@@ -338,7 +338,7 @@ class Reminder(webapp2.RequestHandler):
             # Loop through the email array Participants and send an email
             for email in participants:
                 message.to = email
-                #message.send()
+                message.send()
 
 class Login(webapp2.RequestHandler):
     def get(self): 
@@ -406,12 +406,55 @@ class WeatherDownload(webapp2.RequestHandler):
                 weather.put() 
 
 
+class Dashboard(webapp2.RequestHandler):
+    def get(self):
+        dashboard_name = self.request.get('user', DEFAULT_DASHBOARD_NAME)  
+        todayNice = datetime.now().strftime('%A %d, %b %Y') #e.g. Tuesday 03, Nov 2015]
+        user = users.get_current_user()
+        if user:
+            url = users.create_logout_url(self.request.uri)
+            url_linktext = '<i class="fa fa-sign-out"></i> Logout'
+            dash_dict = {
+                "arlearn1@gmail.com": 
+                "https://app.redash.io/vlp/public/dashboards/GbWtTQj1Qq3bPcbF7uRkyjyJaJw7oVch7mrjetLd",
+                "arlearn2@gmail.com": 
+                "https://app.redash.io/vlp/public/dashboards/x6VQUeBzGMYkAOrsCWJQMnV5YznUaDSe60j1iUaO",
+                "arlearn3@gmail.com": 
+                "https://app.redash.io/vlp/public/dashboards/jJVZTcRhTg6ghe8VzN6yVJ7MGRsnVA6GS5c4Ws7y",
+                "arlearn4@gmail.com":
+                "https://app.redash.io/vlp/public/dashboards/mXmBzKZI9aaX59BcP6CUkcEzw8240KClW1YzQriH",
+                "arlearn5@gmail.com":
+                "https://app.redash.io/vlp/public/dashboards/FJam4N82TuWbmhZfGb1PO9urU6pnDVcEnX25Bl2P",
+                "arlearn6@gmail.com":
+                "https://app.redash.io/vlp/public/dashboards/rx0ndRAiw0j0rmdOpPICt9qnlFdKCsfYOA5PvSh9",
+                "arlearn7@gmail.com":
+                "https://app.redash.io/vlp/public/dashboards/1yYPV2HnIVa1XkZlY2vw17oHqqGCfXOl8eWPKSNQ",
+                "arlearn8@gmail.com":
+                "https://app.redash.io/vlp/public/dashboards/CHIGUpYP4DES2Pkf4iu473wkoR0VYWgmOwix4g1S",
+                "arlearn9@gmail.com":
+                "https://app.redash.io/vlp/public/dashboards/9Tnh409rFReFZPBBHbN5gZO6AVhYrnDeY9ixsKix",
+                # Test with my email
+                "dnldimitri@gmail.com": 
+                "https://app.redash.io/vlp/public/dashboards/9Tnh409rFReFZPBBHbN5gZO6AVhYrnDeY9ixsKix"
+                }
+            url_dashboard = dash_dict[user.email()]
+            template_values = {
+                'user': user,
+                'url_linktext': url_linktext,
+                'today': todayNice,
+                'url_dashboard': url_dashboard
+            }
+            template = JINJA_ENVIRONMENT.get_template('dashboard.html')
+            self.response.write(template.render(template_values))
+        else:
+            self.redirect(users.create_login_url(self.request.uri))
+
 app = webapp2.WSGIApplication([
     ('/', Login),
     ('/rate', MainPage),
     ('/delete', DeleteHandler),
     ('/error', ErrorHandler),
     ('/weather', WeatherDownload),
+    ('/dashboard', Dashboard),
     ('/joDKskOKufkwl39a3jwghga240ckaJEKRmcairtsDK', Reminder),
-    ('/syncbq', SyncBigQuery),
 ], debug=True)

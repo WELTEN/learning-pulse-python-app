@@ -64,18 +64,24 @@ def df_heartrate(query):
     # Output: PD dataframe with 5 minute discretised intervals with all the features 
     """
     time1 = time.time()
+    HRrsh = pd.DataFrame()
     HRframe = pd.read_gbq(query, globe.LRSid) # Populating the dataframe
-    HRdf = HRframe[['timestamp','resultResponse','actorId']]
-    HRrsh = core.emailToId(HRdf,'actorId')
-    HRrsh.set_index(['timestamp','actorId'], inplace=True)
-    HRrsh.resultResponse = HRrsh.resultResponse.astype(int)  
-    HRrsh = HRrsh.groupby([pd.TimeGrouper('5Min',level=0), 
-                       HRrsh.index.get_level_values('actorId')]).agg({'resultResponse': {
-    'hr_mean':  np.mean,        # Mean of the signal
-    'hr_max':   np.max,         # Maximum
-    'hr_min':   np.min,         # Minimum
-    'hr_std':   np.std,
-    'hr_avc':   avg_change }})['resultResponse']
-    time2 = time.time()
-    print 'Heart rate feature generation took %0.1f s' % ((time2-time1))
+    if len(HRframe)>0:
+        HRdf = HRframe[['timestamp','resultResponse','actorId']]
+        HRrsh = core.emailToId(HRdf,'actorId')
+        HRrsh.set_index(['timestamp','actorId'], inplace=True)
+        HRrsh.resultResponse = HRrsh.resultResponse.astype(int)  
+        HRrsh = HRrsh.groupby([pd.TimeGrouper('5Min',level=0), 
+                           HRrsh.index.get_level_values('actorId')]).agg({'resultResponse': {
+        'hr_mean':  np.mean,        # Mean of the signal
+        'hr_max':   np.max,         # Maximum
+        'hr_min':   np.min,         # Minimum
+        'hr_std':   np.std,
+        'hr_avc':   avg_change }})['resultResponse']
+    
+        time2 = time.time()
+        print '----- Heartrate feature generation took %0.1f s' % ((time2-time1))
+    else:
+        print '----- No Heartrate values found in this time-window'
+    
     return HRrsh

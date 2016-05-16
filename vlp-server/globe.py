@@ -24,6 +24,9 @@ def setGlobalNames():
     global end_second_experiment
     global lat_default
     global lng_default
+    global owa_key
+    global weatherFile
+    global googleDocCategories
     
     configParser = ConfigParser.RawConfigParser() # Get configuration file
     configFilePath = r'/Users/daniele/Documents/VisualLearningPulse/code/settings.config'
@@ -46,5 +49,10 @@ def setGlobalNames():
     start_second_experiment = '2016-04-12 14:00:00'
     end_second_experiment = '2016-04-29 18:00:00'
     
-    lat_default = 50.8779846
-    lng_default = 5.9582749
+    lat_default = 50.877861
+    lng_default = 5.958490
+    
+    weatherFile = r'/Users/daniele/Documents/VisualLearningPulse/code/weather.csv'
+    owa_key = configParser.get('vlp', 'owa_key')
+    
+    googleDocCategories = 'https://docs.google.com/spreadsheets/d/183WssCz8deRJkx8ITadM9HtK9Z4W5kWufmPNN-wqYcQ/export?format=csv&id'

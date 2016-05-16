@@ -77,12 +77,12 @@ def fetchData(start_date,end_date):
     
     # Ratings - facultative
     if len(dfRT)>0:        
-        DF =  dfRT
+        DF =  dfRT.dropna()
         
     # Step counts - not really facultative
     if len(dfSC)>0:
         if len(DF)>0:
-            DF.join(dfSC).fillna(0) 
+            DF = DF.join(dfSC).fillna(0) 
         else:
             DF = dfSC.to_frame()
             DF['timeframe'] =  DF.index.get_level_values(0).hour

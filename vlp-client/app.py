@@ -325,7 +325,7 @@ class Reminder(webapp2.RequestHandler):
               }
             )
             joke = response.body['text']
-            joke = "na"
+            #joke = "na"
             
             currentHour = int(datetime.now().strftime('%H'))+1 #e.g. 9
             # Compse the message 

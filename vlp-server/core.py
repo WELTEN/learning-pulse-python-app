@@ -88,12 +88,16 @@ def fetchData(start_date,end_date):
             DF['timeframe'] =  DF.index.get_level_values(0).hour
     
     # Weather  - mandatory
-    if len(dfWT)>0: 
-        DF = DF.join(dfWT).fillna(0)   
+    if len(dfWT)>0 and len(DF)>0: 
+        DF = DF.join(dfWT).fillna(0)
+    else:
+        DF = pd.DataFrame()
         
     # Heartrate - mandatory
     if len(dfHR)>0 and len(DF)>0:     
-        DF = DF.join(dfHR).dropna()  
+        DF = DF.join(dfHR).dropna() 
+    else:
+        DF = pd.DataFrame()
         
     # Join the Categories 
     if len(dfCA)>0 and len(DF)>0:

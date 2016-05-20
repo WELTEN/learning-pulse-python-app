@@ -26,6 +26,11 @@ def flowPoints(c):
     n = 100-abs(c['Abilities']-c['Challenge'])
     d = float(c['Abilities']+c['Challenge'])/2
     return int(n*d/100)
+    
+def flowPoints1(col1,col2): 
+    n = 100-abs(col1-c['Challenge'])
+    d = float(c['Abilities']+c['Challenge'])/2
+    return int(n*d/100)
 
 def activityToId(col):
     #activities = {'reading': '1','writing':'2','meeting': '3', 
@@ -37,11 +42,12 @@ def activityToId(col):
 def df_ratings(query): 
     time1 = time.time()
     # Populating the dataframe 
-    RTframe = pd.read_gbq(query, globe.LRSid)
+    RTframe = pd.read_gbq(query, globe.LRSid,private_key=globe.LRSkey)
     RTrsh = pd.DataFrame()
     if len(RTframe)>0:
-        # Filtering the results   
-        RTdf = RTframe[['timestamp','objectId','resultResponse','actorId']]
+        # Filtering the results 
+        RTdf = RTframe[RTframe['objectId']!='dashboard']
+        RTdf = RTdf[['timestamp','objectId','resultResponse','actorId']]
         
         #Rename the columns
         RTdf.rename(columns={'objectId':'Indicators'}, inplace=True)
@@ -53,9 +59,11 @@ def df_ratings(query):
         #Drop the duplicate ratings (not indentical), take the last
         RTdf = RTdf.set_index(['timestamp','actorId','Indicators']).sort_index()
         RTdf = RTdf.groupby(level=RTdf.index.names).last().reset_index()
-        RTrsh = pd.pivot_table(RTdf, values='value',
+        
+        RTrsh = RTdf.pivot_table(values='value',
                               index=['timestamp','actorId'],
-                               columns=['Indicators'],aggfunc=lambda x:x)        
+                               columns=['Indicators'],aggfunc=lambda x: x.iloc[0])  
+
         RTrsh.reset_index(inplace=True)
         # Fix: the index will shift -1 hr. E.g. 9:00 -> 8:00 
         # Indicating the rating done at 9:00 for the 8:xx activities
@@ -84,6 +92,6 @@ def df_ratings(query):
         time2 = time.time()  
         print '----- Ratings values read from BigQuery in %0.3f s' % ((time2-time1))
     else:
-        print 'No ratings found in this time-window'
+        print '----- No ratings found in this time-window'
         
     return RTrsh

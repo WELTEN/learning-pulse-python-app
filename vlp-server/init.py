@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 Created on Mon Mar 21 21:10:56 2016
@@ -8,54 +9,107 @@ from core import *
 import globe
 import plots
 
-regenerate = False
+# Flags to regenerate historical data or 
+regenerate_data = False
+regenerate_mlme = False
 
-# Import global names
-globe.setGlobalNames()
+weekday = datetime.today().weekday()
+curr_hour = datetime.today().hour
+# set the limit from Mon to Fri and from 8 to 18
+if weekday < 5 and curr_hour > 7 and curr_hour < 19:
+    
+    #try:
+    # Import global names
+    globe.setGlobalNames()
+    
+    # BigQuery update
+    # ------------------------------- 
+    r = requests.get("http://learning-pulse.appspot.com/syncBigQuery")
+    print "----- SyncBigQuery responded with status: " + str(r.status_code)
+    r = requests.get("http://learning-pulse.appspot.com/importers")
+    print "----- Importers responded with status: " + str(r.status_code)
+    
+    # Download weather
+    # ----------------
+    WeatherDownload()
+    
 
-# BigQuery update
-# ------------------------------- 
-r = requests.get("http://learning-pulse.appspot.com/syncBigQuery")
-print "----- SyncBigQuery responded with status: " + str(r.status_code)
-r = requests.get("http://learning-pulse.appspot.com/importers")
-print "----- Importers responded with status: " + str(r.status_code)
-
-# Download weather
-# ----------------
-WeatherDownload()
-
-# Fetch other data 
-if os.path.exists('last_sync.txt'):
-    f = open(filename)
-    last_date = f.read()
-else:
-    last_date = '2016-05-17 08:00:00'
-print "...... The last date is " + last_date    
-current_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-df_new = fetchData(last_date,current_date)
-if len(df_new)>0:
-    # Data second experiment
-    if regenerate: 
-        # Fetch and transform User data from the Learning Record Store
-        df_original = fetchData(globe.start_second_experiment,globe.end_second_experiment)
-        df_original_flat = df_original.reset_index()
-        gbq.to_gbq(df_original_flat,globe.PRShistory,globe.PRSid,if_exists='replace')
+    
+    # Fetch other data 
+    if os.path.exists('last_sync.txt'):
+        f = open('last_sync.txt')
+        last_date = f.read()
     else:
-        # download from BigQuery    
-        df_original_flat =  pd.read_gbq("Select * FROM ["+globe.PRShistory+"]", globe.PRSid)
-        df_original = df_original_flat.set_index(['timestamp','actorId']).sort_index()
-    df_appended = pd.concat([df_original,df_new])
-    new_forecast = processData(df_appended)
-    print new_forecast   
-    gbq.to_gbq(new_forecast,globe.PRSforecast,globe.PRSid,if_exists='append')
-    
-    print "+++++ Forecast recalculated +++++" 
-    
-    #update the last sync date
-    if not os.path.exists('last_sync.txt'):
-        file('last_sync.txt', 'w').close()  
+        last_date = '2016-05-17 08:00:00'
+    print "...... The last date is " + last_date    
+    current_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    df_new = fetchData(last_date,current_date)
     if len(df_new)>0:
-        with open('last_sync.txt', 'w') as f:
-            f.write(current_date)     
-else:
-    print "+++++ No new data +++++" 
+        
+        # Regenerate Data second experiment
+        if regenerate_data: 
+            # Fetch and transform User data from the Learning Record Store
+            df_original = fetchData(globe.start_second_experiment,
+                                    globe.end_second_experiment)
+            df_original_flat = df_original.reset_index()
+            gbq.to_gbq(df_original_flat,globe.PRShistory,globe.PRSid,
+                       if_exists='replace',private_key=globe.PRSkey)
+        else:
+            # download from BigQuery    
+            df_original_flat =  pd.read_gbq("Select * FROM ["+ \
+                globe.PRShistory+"]", globe.PRSid,private_key=globe.PRSkey)
+            df_original = df_original_flat.set_index(['timestamp',
+            'actorId']).sort_index()
+        
+        # STORE new Historical data
+        df_history = pd.concat([df_original,df_new]).sort_index()
+        df_history = df_history[~df_history.index
+            .duplicated(keep='last')]
+        gbq.to_gbq(df_history.reset_index(),globe.PRShistory,globe.PRSid,
+                   if_exists='replace',private_key=globe.PRSkey)
+
+        # PROCESS new data
+        new_forecast = processData(df_history,reg_mlme=regenerate_mlme)
+        
+        # STORE new Forecasts data
+        old_forecast =  pd.read_gbq("Select * FROM ["+ \
+                globe.PRSforecast+"]", globe.PRSid,private_key=globe.PRSkey)  
+        df_forecast = pd.concat([old_forecast,new_forecast]).set_index(
+        ['timestamp','actorId']).sort_index()
+        df_forecast = df_forecast[~df_forecast.index
+            .duplicated(keep='last')].reset_index()   
+        gbq.to_gbq(new_forecast,globe.PRSforecast,globe.PRSid,
+                   if_exists='append',private_key=globe.PRSkey)
+        
+        print "+++++ Forecast recalculated +++++" 
+        
+        #update the last sync date
+        if not os.path.exists('last_sync.txt'):
+            file('last_sync.txt', 'w').close()  
+        if len(df_new)>0:
+            with open('last_sync.txt', 'w') as f:
+                f.write(current_date)     
+    else:
+        print "+++++ No new data +++++" 
+        
+    ###
+    # Update the cubes
+    # ----------------
+    cubeUpdates()
+    
+    # Last execution
+    # ----------------
+    if not os.path.exists('last_exec.txt'):
+        file('last_exec.txt', 'w').close()  
+    with open('last_exec.txt', 'w') as f:
+        f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S')+'\n') 
+"""
+    except Exception as e:
+        # If error send a message
+        msg = e.__doc__ + '\n' + e.message
+        server = smtplib.SMTP('mail.gandi.net', 25)
+        server.starttls()
+        server.login(globe.senderEmail, globe.senderPassword)
+        server.sendmail('VLP alert <'+globe.senderEmail+'>', globe.receiverEmail, msg)
+        server.quit()
+"""

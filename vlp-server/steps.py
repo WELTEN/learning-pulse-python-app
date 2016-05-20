@@ -14,7 +14,7 @@ from core import *
 def df_steps(query,allUsers=False):
     # Populating the dataframe
     time1 = time.time()
-    SCframe = pd.read_gbq(query, globe.LRSid) 
+    SCframe = pd.read_gbq(query, globe.LRSid,private_key=globe.LRSkey) 
     SCrsh = pd.DataFrame()
     if len(SCframe)>0:
          # Filtering the results 

@@ -65,7 +65,7 @@ def df_heartrate(query):
     """
     time1 = time.time()
     HRrsh = pd.DataFrame()
-    HRframe = pd.read_gbq(query, globe.LRSid) # Populating the dataframe
+    HRframe = pd.read_gbq(query, globe.LRSid,private_key=globe.LRSkey) # Populating the dataframe
     if len(HRframe)>0:
         HRdf = HRframe[['timestamp','resultResponse','actorId']]
         HRrsh = core.emailToId(HRdf,'actorId')

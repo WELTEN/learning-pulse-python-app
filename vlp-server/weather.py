@@ -56,7 +56,7 @@ def df_weather(query,start_date,end_date):
             time2 = time.time()
             print '----- Weather generation (from CSV) took %0.1f s' % ((time2-time1))
             return WTrsh
-    WTframe = pd.read_gbq(query, globe.PRSid) 
+    WTframe = pd.read_gbq(query, globe.PRSid,private_key=globe.PRSkey) 
     WTrsh = pd.DataFrame()
     if len(WTframe)>0:
         WTdf = WTframe[['date','status','user']] 

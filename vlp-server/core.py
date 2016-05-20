@@ -16,6 +16,9 @@ import urllib2
 import json
 import warnings
 import requests
+import smtplib
+import pickle
+
 
 # app libraries
 import globe
@@ -24,6 +27,7 @@ import steps
 import heartrate
 import activities
 import weather
+import cube
 
 # statistical libraries
 from statsmodels.tsa.api import VAR
@@ -222,20 +226,6 @@ def emailToId(df,col):
     #df[col] = df[col].str.replace('@gmail.com' , '')
     #df[col] = df[col].astype(int) 
     return df
-    
-def nowFlow():
-    """
-    Input: none
-    Output: current Flow
-    """  
-    # rounded minutes
-    round_mins = (int(datetime.now().strftime('%M'))/5)*5
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:')+str(round_mins)
-    df = pd.read_gbq("Select Flow FROM ["+globe.PRStable+"] WHERE timestamp='"+timestamp+"'", globe.PRSid)
-    if df.empty:
-        return -1
-    else:
-        return int(df.Flow[0])
    
 def flowPoints(c): 
     """
@@ -277,7 +267,7 @@ def WeatherDownload():
     "as timestamp FROM (SELECT lat,lng,actorId,timestamp FROM [xAPIStatements.xapiTableNew]" \
     "WHERE origin = 'rating'  ORDER by timestamp) GROUP BY actorId"
    
-    df = pd.read_gbq(query, globe.LRSid)
+    df = pd.read_gbq(query, globe.LRSid, private_key=globe.LRSkey)
     df = emailToId(df,'actorId')
     df = df.sort_values(by='timestamp').drop_duplicates(subset='actorId',keep='last')
 
@@ -304,7 +294,7 @@ def WeatherDownload():
        
     print "----- Weather file updated in the CSV file"  
     
-def processData(df_original):
+def processData(df_original,reg_mlme=True):
     """
     Description: core processing of the data. It's divided in two main steps:
     step 1, apply VAR to the fixed effects wrt to each actor, step 2, apply LMEM
@@ -370,10 +360,17 @@ def processData(df_original):
     # Training phase of four model, one per each label
     for target in labels:
         endog = data[target] # endogenous, ie the values we want to predict
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore")
-            LMEM = sm.MixedLM(endog, exog, groups=groups, exog_re=exog_re).fit()
-            LMEM_models.append(LMEM)
+        if ((reg_mlme==False) 
+            and os.path.exists('model_'+target+'.pickle')):
+            LMEM_results = pickle.load(open('model_'+target+'.pickle', 'rb'))
+            LMEM_models.append(LMEM_results)
+        else:
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore")
+                LMEM_model = sm.MixedLM(endog, exog, groups=groups, exog_re=exog_re)
+                LMEM_results = LMEM_model.fit()
+                LMEM_results.save('model_'+target+'.pickle',remove_data=False)
+                LMEM_models.append(LMEM_results)
         
     # Coefficients importance averaging
     coeff = pd.DataFrame(index=range(0,len(exog.T)),data={'coefficients':0.0}, dtype='float').coefficients
@@ -400,3 +397,24 @@ def processData(df_original):
     df = df.rename(columns={'index':'timestamp'})
     return df
 
+def cubeUpdates():
+    df = currentFlows()
+    d = globe.cubeUsersMapping
+    if len(df)>0:
+        for key, value in d.iteritems():
+            if len(df[df.actorId==value].Flow)>0:
+                #.updateCube(key,int(df[df.actorId==2].Flow.values))
+                print "---- Updated Cube: "+key+", ActorId: "+ str(value)  
+
+
+def currentFlows():
+    """
+    Input: none
+    Output: current Flow for each actorId
+    """  
+    # rounded minutes
+    round_mins = (int(datetime.now().strftime('%M'))/5)*5
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:')+str(round_mins)
+    df = pd.read_gbq("Select Flow FROM ["+globe.PRSforecast+"] WHERE timestamp='"+timestamp+"'",
+                     globe.PRSid, private_key=globe.PRSkey)
+    return df

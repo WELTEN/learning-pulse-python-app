@@ -19,7 +19,7 @@ def df_activities(query):
     
     # Populating the dataframe
     time1 = time.time()
-    ACframe = pd.read_gbq(query, globe.LRSid)
+    ACframe = pd.read_gbq(query, globe.LRSid, private_key=globe.LRSkey)
     ACrsh = pd.DataFrame()
     CArsh = pd.DataFrame()
     if len(ACframe)>0:

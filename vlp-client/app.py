@@ -338,7 +338,7 @@ class Reminder(webapp2.RequestHandler):
             # Loop through the email array Participants and send an email
             for email in participants:
                 message.to = email
-                message.send()
+                #message.send()
 
 class Login(webapp2.RequestHandler):
     def get(self): 
@@ -408,10 +408,34 @@ class WeatherDownload(webapp2.RequestHandler):
 
 class Dashboard(webapp2.RequestHandler):
     def get(self):
-        dashboard_name = self.request.get('user', DEFAULT_DASHBOARD_NAME)  
+        dashboard_name = self.request.get('user', DEFAULT_DASHBOARD_NAME) 
+        #@todo start here
+        today = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
         todayNice = datetime.now().strftime('%A %d, %b %Y') #e.g. Tuesday 03, Nov 2015]
         user = users.get_current_user()
         if user:
+            xAPI  = '{ "timestamp":  "'+today+'",  "actor": \
+            { "objectType": "Agent", "name": "%s", "mbox": "mailto:%s" }, \
+            "verb": { "id": "http://activitystrea.ms/schema/1.0/access", \
+            "display": { "en-US": "Indicates the learner accessed something"\
+            } }, "object": { "objectType": "Activity", "id": "dashboard", \
+            "definition": { "name": { "en-US": "Learner Dashboard" }, \
+            "description": { "en-US": "this is a page" }, "type": \
+            "http://activitystrea.ms/schema/1.0/page" } }, "result":\
+            { "response": "http://visual-learning-pulse.appspot.com/dashboard" },\
+             "context": { "extensions": { \
+            "http://activitystrea.ms/schema/1.0/place": { "definition": \
+            { "type": "http://activitystrea.ms/schema/1.0/place", "name":\
+            { "en-US": "Place" }, "description": { "en-US": \
+            "Represents a physical location." } }, "id": \
+            "http://vocab.org/placetime/geopoint/wgs84/X50.877861Y5.958490.html", \
+            "geojson": { "type": "FeatureCollection", "features": [ \
+            { "geometry": { "type": "Point", "coordinates": [ \
+            50.877861,5.958490] }, "type": "Feature" } ] }, "objectType": "Place" } } } }' \
+            % (users.get_current_user().email(),user.email())
+
+            result = urlfetch.fetch(url=dataProxyURL, headers=dataProxyHeader, payload = xAPI, method=urlfetch.POST)
+
             url = users.create_logout_url(self.request.uri)
             url_linktext = '<i class="fa fa-sign-out"></i> Logout'
             dash_dict = {
@@ -442,7 +466,7 @@ class Dashboard(webapp2.RequestHandler):
                 'user': user,
                 'url_linktext': url_linktext,
                 'today': todayNice,
-                'url_dashboard': url_dashboard
+                'url_dashboard': url_dashboard,
             }
             template = JINJA_ENVIRONMENT.get_template('dashboard.html')
             self.response.write(template.render(template_values))

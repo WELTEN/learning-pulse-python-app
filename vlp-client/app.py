@@ -338,7 +338,7 @@ class Reminder(webapp2.RequestHandler):
             # Loop through the email array Participants and send an email
             for email in participants:
                 message.to = email
-                #message.send()
+                message.send()
 
 class Login(webapp2.RequestHandler):
     def get(self): 

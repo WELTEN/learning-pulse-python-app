@@ -18,6 +18,7 @@ import warnings
 import requests
 import smtplib
 import pickle
+import traceback
 
 
 # app libraries
@@ -45,25 +46,26 @@ def fetchData(start_date,end_date):
     """
     
     # Ratings
-    query = "SELECT *  FROM "+globe.LRStable+" WHERE origin = 'rating' " \
+    query = "SELECT timestamp, actorId, objectId, resultResponse FROM "+globe.LRStable+" WHERE origin = 'rating' " \
         " AND timestamp > PARSE_UTC_USEC('"+start_date+"') AND timestamp < " \
         " PARSE_UTC_USEC('"+end_date+"') ORDER by timestamp"
     dfRT = ratings.df_ratings(query)
     
     # Steps
-    query = "SELECT *  FROM "+globe.LRStable+" WHERE objectID = 'StepCount' " \
+    query = "SELECT timestamp, actorId, resultResponse  FROM "+globe.LRStable+" WHERE objectID = 'StepCount' " \
         " AND timestamp > PARSE_UTC_USEC('"+start_date+"') AND timestamp < " \
         " PARSE_UTC_USEC('"+end_date+"') ORDER by timestamp"
     dfSC = steps.df_steps(query)
     
     # Heart Rate
-    query = "SELECT *  FROM "+globe.LRStable+" WHERE objectID = 'HeartRate' " \
+    query = "SELECT timestamp, actorId, resultResponse  FROM "+globe.LRStable+" WHERE objectID = 'HeartRate' " \
         " AND timestamp > PARSE_UTC_USEC('"+start_date+"') AND timestamp < " \
         " PARSE_UTC_USEC('"+end_date+"') ORDER by timestamp"
     dfHR = heartrate.df_heartrate(query) 
     
     # Activities
-    query = "SELECT *  FROM "+globe.LRStable+" WHERE origin = 'rescuetime' " \
+    query = "SELECT timestamp, actorId, resultResponse, objectId, origin, " \
+        " resultDuration FROM "+globe.LRStable+" WHERE origin = 'rescuetime' " \
         " AND timestamp > PARSE_UTC_USEC('"+start_date+"')  AND timestamp < " \
         " PARSE_UTC_USEC('"+end_date+"') ORDER by timestamp"
     dfAC,dfCA = activities.df_activities(query)
@@ -403,7 +405,7 @@ def cubeUpdates():
     if len(df)>0:
         for key, value in d.iteritems():
             if len(df[df.actorId==value].Flow)>0:
-                #.updateCube(key,int(df[df.actorId==2].Flow.values))
+                cube.updateCube(key,int(df[df.actorId==2].Flow.values))
                 print "---- Updated Cube: "+key+", ActorId: "+ str(value)  
 
 
@@ -414,7 +416,11 @@ def currentFlows():
     """  
     # rounded minutes
     round_mins = (int(datetime.now().strftime('%M'))/5)*5
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:')+str(round_mins)
-    df = pd.read_gbq("Select Flow FROM ["+globe.PRSforecast+"] WHERE timestamp='"+timestamp+"'",
+    if round_mins<10:
+        round_mins = str(round_mins).zfill(2)
+    else:
+        round_mins = str(round_mins)
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:')+round_mins
+    df = pd.read_gbq("Select actorId,Flow FROM ["+globe.PRSforecast+"] WHERE timestamp='"+timestamp+"'",
                      globe.PRSid, private_key=globe.PRSkey)
     return df

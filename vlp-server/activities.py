@@ -49,9 +49,9 @@ def df_activities(query):
     
         #dfAC,dfCA = activities.df_activities("SELECT *  FROM [xAPIStatements.xapiTableNew] WHERE origin = 'rescuetime' AND timestamp > PARSE_UTC_USEC('2015-11-23 07:00:00')  AND timestamp <  PARSE_UTC_USEC('2015-12-09 20:00:00') ORDER by timestamp")
         time2 = time.time()  
-        print '----- Activities processed in %0.1f s' % ((time2-time1))
+        print '4 ----- Activities processed in %0.1f s' % ((time2-time1))
     else:
         time2 = time.time()  
-        print '----- No activities found in this time window'
+        print '4 ----- No activities found in this time window'
         
     return ACrsh,CArsh

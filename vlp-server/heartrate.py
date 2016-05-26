@@ -80,8 +80,8 @@ def df_heartrate(query):
         'hr_avc':   avg_change }})['resultResponse']
     
         time2 = time.time()
-        print '----- Heartrate feature generation took %0.1f s' % ((time2-time1))
+        print '3 ----- Heartrate feature generation took %0.1f s' % ((time2-time1))
     else:
-        print '----- No Heartrate values found in this time-window'
+        print '3 ----- No Heartrate values found in this time-window'
     
     return HRrsh

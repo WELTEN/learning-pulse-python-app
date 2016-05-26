@@ -95,7 +95,7 @@ def fetchData(start_date,end_date):
     
     # Weather  - mandatory
     if len(dfWT)>0 and len(DF)>0: 
-        DF = DF.join(dfWT).fillna(0)
+        DF = DF.join(dfWT).fillna(method='bfill')
     else:
         DF = pd.DataFrame()
         
@@ -159,11 +159,15 @@ def VARprocess(df,log=False):
     maxAttr = len(df.columns) 
     # Find the right lag order
     orderFound = False
-    while orderFound!=True:   
+    print "7.1.0 ----- Finding an order for the VAR"
+    maxIter = 0
+    while orderFound!=True and maxIter<15:
+        maxIter = maxIter+1
         try:
-            model = VAR(df.ix[:,0:maxAttr])
+            model = VAR(df)
             order = model.select_order() 
             orderFound = True
+            print " !!! loop stuck" 
         except:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             #if str(exc_obj)=="data already contains a constant.":
@@ -172,12 +176,13 @@ def VARprocess(df,log=False):
             #maxAttr = int(str(exc_obj).split("-th")[0])-1
             #print "Exception, reducing to n_attributes ",maxAttr
             orderFound = False
- 
-    n_lags = max(order.iteritems(), key=operator.itemgetter(1))[1]
-    method = max(order.iteritems(), key=operator.itemgetter(1))[0]
-    #print "'----- n_lags ",n_lags
-    #print "'----- method ",method    
-    results = model.fit(maxlags=n_lags, ic=method)
+    print "7.1.1 ----- Model fitting"
+    if orderFound:
+        n_lags = max(order.iteritems(), key=operator.itemgetter(1))[1]
+        method = max(order.iteritems(), key=operator.itemgetter(1))[0]
+        results = model.fit(maxlags=n_lags, ic=method)
+    else:
+        results = model.fit()
     return results
     
 def VARforecast(df,results,window,log=False):
@@ -188,6 +193,7 @@ def VARforecast(df,results,window,log=False):
     """  
     lag_order = results.k_ar
     # Generate n prediction, where n is the window size, return array
+    print "7.1.2 ----- Model forecasting"
     forecasts = results.forecast(df.values[-lag_order:], window)
     # Create the new index for the predictions
     ixPred = pd.date_range(df[-1:].index.to_pydatetime()[0]
@@ -196,7 +202,6 @@ def VARforecast(df,results,window,log=False):
     # Generate a dataframe
     dfForecasts = pd.DataFrame(forecasts,index=ixPred,columns=df.columns.values)
     # Append the forecast to the original set, then add the header of the df
-    # Invert the logarithmic scale and apply cumsum
     if (log):     
         df = np.log(df+0.1).diff().dropna()
         dfReturn = (np.exp(pd.concat([df,
@@ -293,8 +298,7 @@ def WeatherDownload():
         file(globe.weatherFile, 'w').close()
         with open(globe.weatherFile, 'a') as f:
            df.to_csv(f, header=True, index=False)
-       
-    print "----- Weather file updated in the CSV file"  
+
     
 def processData(df_original,reg_mlme=True):
     """
@@ -330,6 +334,7 @@ def processData(df_original,reg_mlme=True):
     df_future = pd.DataFrame() #prepare the future dataframe
     var_attributes = [item for item in fixed_effects if item not in ['timeframe']]
     for user in actors:    
+        print "7.1 ----- Forecasting actor ARLearn"+str(user)
         df_user = df_original.xs(user,level='actorId')
         df = df_user[var_attributes]     
         VARres = VARprocess(df)    
@@ -405,7 +410,7 @@ def cubeUpdates():
     if len(df)>0:
         for key, value in d.iteritems():
             if len(df[df.actorId==value].Flow)>0:
-                cube.updateCube(key,int(df[df.actorId==2].Flow.values))
+                cube.updateColors(key,int(df[df.actorId==2].Flow.values))
                 print "---- Updated Cube: "+key+", ActorId: "+ str(value)  
 
 

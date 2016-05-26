@@ -41,6 +41,9 @@ def jsonToDF(string):
 def df_weather(query,start_date,end_date):        
     # Populating the dataframe
     time1 = time.time()
+    
+    # Check the CSV file
+    WTcsv = pd.DataFrame()
     if os.path.exists(globe.weatherFile):
         dateparse = lambda x: pd.datetime.strptime(x, '%Y-%m-%d %H:%M:%S.%f')
         WTdf = pd.read_csv(globe.weatherFile, parse_dates=['timestamp'], date_parser=dateparse)
@@ -50,28 +53,35 @@ def df_weather(query,start_date,end_date):
             WTdf['weather'] = WTdf['weather'].replace({"u'":"'","'":'"'}, regex=True)
             WTdf['lat'], WTdf['lng'], WTdf['weatherId'], WTdf['pressure'],\
             WTdf['temp'], WTdf['humidity'] = zip(*WTdf['weather'].map(jsonToDF))
-            WTrsh = WTdf.drop(['weather'], axis=1)
-            WTrsh.set_index(['timestamp','actorId'], inplace=True)
-            WTrsh = WTrsh.unstack().resample('5min').fillna(method='bfill').fillna(method='pad').stack()
+            WTcsv = WTdf.drop(['weather'], axis=1)
+            WTcsv.set_index(['timestamp','actorId'], inplace=True)
+            WTcsv = WTcsv.unstack().resample('5min').fillna(method='bfill').fillna(method='pad').stack()
             time2 = time.time()
-            print '----- Weather generation (from CSV) took %0.1f s' % ((time2-time1))
-            return WTrsh
+            print '5.1 ----- Weather generation (from CSV) took %0.1f s' % ((time2-time1))
+    
+    # Check the Bigquery   
     WTframe = pd.read_gbq(query, globe.PRSid,private_key=globe.PRSkey) 
-    WTrsh = pd.DataFrame()
+    WTgbq = pd.DataFrame()
     if len(WTframe)>0:
         WTdf = WTframe[['date','status','user']] 
-        WTrsh = core.emailToId(WTdf,'user')
-        WTrsh['status'] = WTrsh['status'].replace({"u'":"'","'":'"'}, regex=True)
-        WTrsh['lat'], WTrsh['lng'], WTrsh['weatherId'], WTrsh['pressure'],\
-        WTrsh['temp'],WTrsh['humidity'] = zip(*WTrsh['status'].map(jsonToDF))
-        WTrsh.rename(columns={'date':'timestamp'}, inplace=True)
-        WTrsh.rename(columns={'user':'actorId'}, inplace=True)  
-        WTrsh = WTrsh.drop(['status'], axis=1)
-        WTrsh.set_index(['timestamp','actorId'], inplace=True)
-        WTrsh = WTrsh.unstack().resample('5min').fillna(method='bfill').fillna(method='pad').stack()
+        WTgbq = core.emailToId(WTdf,'user')
+        WTgbq['status'] = WTgbq['status'].replace({"u'":"'","'":'"'}, regex=True)
+        WTgbq['lat'], WTgbq['lng'], WTgbq['weatherId'], WTgbq['pressure'],\
+        WTgbq['temp'],WTgbq['humidity'] = zip(*WTgbq['status'].map(jsonToDF))
+        WTgbq.rename(columns={'date':'timestamp'}, inplace=True)
+        WTgbq.rename(columns={'user':'actorId'}, inplace=True)  
+        WTgbq = WTgbq.drop(['status'], axis=1)
+        WTgbq.set_index(['timestamp','actorId'], inplace=True)
+        WTgbq = WTgbq.unstack().resample('5min').stack()
         time2 = time.time()
-        print '----- Weather generation (from BigQuery) took %0.1f s' % ((time2-time1))
+        print '5.2 ----- Weather generation (from BigQuery) took %0.1f s' % ((time2-time1))
+    
+    WTrsh = pd.DataFrame()
+    if len(WTcsv)>0 and len(WTgbq)>0:
+        WTrsh = pd.concat([WTcsv,WTgbq])
+        WTrsh = WTrsh[~WTrsh.index.duplicated(keep='last')]
+    elif len(WTcsv)>0:
+        WTrsh = WTcsv
     else:
-        time2 = time.time()
-        print '----- There is no weather data in this time-window'  
+        WTrsh = WTgbq
     return WTrsh

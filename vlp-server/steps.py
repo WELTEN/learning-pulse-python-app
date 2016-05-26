@@ -26,5 +26,5 @@ def df_steps(query,allUsers=False):
         SCrsh.set_index(['timestamp','actorId'], inplace=True)
         SCrsh = SCrsh.groupby([pd.TimeGrouper('5Min',level=0), SCrsh.index.get_level_values('actorId')])['Steps'].sum()
         time2 = time.time()  
-        print '----- Steps values read from BigQuery in %0.3f s' % ((time2-time1))
+        print '2 ----- Steps values read from BigQuery in %0.3f s' % ((time2-time1))
     return SCrsh

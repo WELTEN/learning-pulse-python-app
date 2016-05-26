@@ -40,7 +40,7 @@ def getSignatureKey(key, date_stamp, regionName, serviceName):
     kSigning = sign(kService, 'aws4_request')
     return kSigning
 
-def updateCube(cubeLetter,valueCube):
+def updateColors(cubeLetter,valueCube):
     
     # Request parameters for CreateTable--passed in a JSON block.
     request_parameters =  '{"state": {"desired": {"flowLevel": '

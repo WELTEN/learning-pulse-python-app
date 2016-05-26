@@ -70,4 +70,4 @@ def setGlobalNames():
     
     googleDocCategories = 'https://docs.google.com/spreadsheets/d/183WssCz8deRJkx8ITadM9HtK9Z4W5kWufmPNN-wqYcQ/export?format=csv&id'
     
-    cubeUsersMapping = {'A':3,'B':4,'C':5,'D':6}
+    cubeUsersMapping = {'A':1,'B':5,'C':6,'D':9}

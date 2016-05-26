@@ -90,8 +90,8 @@ def df_ratings(query):
         # The correlation between Flow and Productivity 
         #flowProdCorr = RTrsh[['Productivity','Flow']].corr().iloc[0]['Flow']
         time2 = time.time()  
-        print '----- Ratings values read from BigQuery in %0.3f s' % ((time2-time1))
+        print '1 ----- Ratings values read from BigQuery in %0.3f s' % ((time2-time1))
     else:
-        print '----- No ratings found in this time-window'
+        print '1 ----- No ratings found in this time-window'
         
     return RTrsh

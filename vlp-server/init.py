@@ -10,13 +10,15 @@ import globe
 import plots
 
 # Flags to regenerate historical data or 
-regenerate_data = False
+regenerate_data = True
 regenerate_mlme = False
 store_mode = True
 
 weekday = datetime.today().weekday()
 curr_hour = datetime.today().hour
 current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+gt1 = time.time() 
 
 # set the limit from Mon to Fri and from 8 to 18
 if weekday < 5 and curr_hour > 7 and curr_hour < 19:
@@ -28,33 +30,31 @@ if weekday < 5 and curr_hour > 7 and curr_hour < 19:
         # BigQuery update
         # ------------------------------- 
         r = requests.get("http://learning-pulse.appspot.com/syncBigQuery")
-        print "----- SyncBigQuery responded with status: " + str(r.status_code)
+        print "0.1 ----- SyncBigQuery responded with status: " + str(r.status_code)
         r = requests.get("http://learning-pulse.appspot.com/importers")
-        print "----- Importers responded with status: " + str(r.status_code)
+        print "0.2 ----- Importers responded with status: " + str(r.status_code)
         
         # Download weather
         # ----------------
-        WeatherDownload()
-        
-    
-        
-        # Fetch other data 
-        last_date = '2016-05-23 11:00:00'
-        """
+        WeatherDownload()           
+        print "0.3 ----- Weather file updated in the CSV file"  
+
+        current_date =  datetime.now().strftime('%Y-%m-%d %H:%M:%S')      
         if os.path.exists('last_sync.txt'):
             f = open('last_sync.txt')
             last_date = f.read()
         else:
             last_date = '2016-05-17 08:00:00'
-        """
+
         print "...... The last date is " + last_date    
-        current_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
         df_new = fetchData(last_date,current_date)
         if len(df_new)>0:
             
             # Regenerate Data second experiment
             if regenerate_data: 
                 # Fetch and transform User data from the Learning Record Store
+                print "6 ----- Regenerating data" 
                 df_original = fetchData(globe.start_second_experiment,
                                         globe.end_second_experiment)
                 df_original_flat = df_original.reset_index()
@@ -62,6 +62,7 @@ if weekday < 5 and curr_hour > 7 and curr_hour < 19:
                            if_exists='replace',private_key=globe.PRSkey)
             else:
                 # download from BigQuery    
+                print "6 ----- Reading data from the BigQuery" 
                 df_original_flat =  pd.read_gbq("Select * FROM ["+ \
                     globe.PRShistory+"]", globe.PRSid,private_key=globe.PRSkey)
                 df_original = df_original_flat.set_index(['timestamp',
@@ -70,14 +71,25 @@ if weekday < 5 and curr_hour > 7 and curr_hour < 19:
             # STORE new Historical data
             df_history = pd.concat([df_original,df_new]).sort_index()
             df_history = df_history[~df_history.index
-                .duplicated(keep='last')]
-            if store_mode:
-                gbq.to_gbq(df_history.reset_index(),globe.PRShistory,globe.PRSid,
-                           if_exists='replace',private_key=globe.PRSkey)
-    
+                .duplicated(keep='last')].fillna(0)
+            if store_mode and len(df_history)>0:
+                try:
+                    gbq.to_gbq(df_history.reset_index(),globe.PRShistory,globe.PRSid,
+                               if_exists='replace',private_key=globe.PRSkey)
+                except:
+                    gbq.to_gbq(df_history.reset_index(),globe.PRShistory,globe.PRSid,
+                               if_exists='replace',private_key=globe.PRSkey)
+            else:
+                print "df_history vuoto at "+current_date
+
+
+                
             # PROCESS new data
-            new_forecast = processData(df_history,reg_mlme=regenerate_mlme)
+            print "7 ----- Starting the processing" 
+            new_forecast = processData(df_new,reg_mlme=regenerate_mlme)
+
             
+            print "8 ----- Storing forecasts" 
             # STORE new Forecasts data
             old_forecast =  pd.read_gbq("Select * FROM ["+ \
                     globe.PRSforecast+"]", globe.PRSid,private_key=globe.PRSkey)  
@@ -93,11 +105,13 @@ if weekday < 5 and curr_hour > 7 and curr_hour < 19:
             print "+++++ Forecast recalculated +++++" 
             
             #update the last sync date
+            delta = timedelta(hours=-2)
+            last_date = datetime.now() + delta
             if not os.path.exists('last_sync.txt'):
                 file('last_sync.txt', 'w').close()  
             if len(df_new)>0:
                 with open('last_sync.txt', 'w') as f:
-                    f.write(current_date)     
+                    f.write(last_date.strftime('%Y-%m-%d %H:%M:%S')+'\n')     
         else:
             print "+++++ No new data +++++" 
             
@@ -112,7 +126,6 @@ if weekday < 5 and curr_hour > 7 and curr_hour < 19:
             file('last_exec.txt', 'w').close()  
         with open('last_exec.txt', 'w') as f:
             f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S')+'\n') 
-        
 
     except Exception, err:
         msg  = str(traceback.format_exc())
@@ -126,3 +139,6 @@ if not os.path.exists('last_activ.txt'):
     file('last_activ.txt', 'w').close()  
 with open('last_activ.txt', 'w') as f:
     f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S')+'\n')
+    
+gt2 = time.time() 
+print 'END ----- Total script execution %0.1f m' % ((gt2-gt1)/60)

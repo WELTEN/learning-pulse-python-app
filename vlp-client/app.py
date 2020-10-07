@@ -22,7 +22,7 @@ from apiclient.discovery import build
 from oauth2client.appengine import AppAssertionCredentials
 
 url = 'https://www.googleapis.com/auth/bigquery'
-PROJECT_NUMBER = '815835684542'
+PROJECT_NUMBER = 'xxxxx'
 
 credentials = AppAssertionCredentials(scope=url)
 httpss = credentials.authorize(httplib2.Http())
@@ -43,8 +43,7 @@ DEFAULT_DASHBOARD_NAME = 'default_dashboard'
 timeframes = [6,7,8,9,10,11,12,13,14,15,16,17]  
 to = 1 # Time offset UTC+1 
 today = datetime.now() # dateobject 
-#participants = ['ddm@ou.nl']
-participants = ['ddm@ou.nl','Alessandra.Antonaci@ou.nl','Angel.Suarez@ou.nl','bibeg.limbu@ou.nl','Grigorij.Saveski@ou.nl','Ioannis.Zaimidis@ou.nl','Katerina.Riviou@ou.nl','kevin.ackermans@ou.nl','Maartje.Henderikx@ou.nl','martine.schophuizen@ou.nl']
+#participants = ['xxxxx']
 
 defaultLat = 50
 defaultLong = 5
@@ -299,7 +298,7 @@ class MainPage(webapp2.RequestHandler):
         %s,%s] }, "type": "Feature" } ] }, "objectType": "Place" } } } }' \
         % (rating.author.email,rating.author.email,rating.activity,rating.latitude,rating.longitude)
 
-        message = mail.EmailMessage(sender="Visual Learning Pulse <dnldimitri@gmail.com>", #"daniele.dimitri@ou.nl",
+        message = mail.EmailMessage(sender="Visual Learning Pulse <xxxx@xxxx.xx>", 
                             subject="xAPI")
         
         emailbody = ""
@@ -307,9 +306,6 @@ class MainPage(webapp2.RequestHandler):
             #emailbody += statement + "--------------------------------- "
             parsed_json = json.loads(statement)
             result = urlfetch.fetch(url=dataProxyURL, headers=dataProxyHeader, payload = statement, method=urlfetch.POST)
-        #message.body = emailbody
-        #message.to = "dnldimitri@gmail.com"
-        #message.send()
         query_params = {'dashboard_name': dashboard_name}
         self.redirect('/?' + urllib.urlencode(query_params))
 
@@ -329,7 +325,7 @@ class Reminder(webapp2.RequestHandler):
             
             currentHour = int(datetime.now().strftime('%H'))+1 #e.g. 9
             # Compse the message 
-            message = mail.EmailMessage(sender="Visual Learning Pulse <dnldimitri@gmail.com>", #"",
+            message = mail.EmailMessage(sender="Visual Learning Pulse <xxxx@xx.xx>", #"",
                             subject="It's time to rate your activity")
             message.html = "<!DOCTYPE html><html><body style='font-family: Arial, sans-serif; font-size:11px; text-align:center;'> \
                 <p>"+joke+"</p><br /><p>Please remember to submit your ratings.</p><br />  \
@@ -439,27 +435,8 @@ class Dashboard(webapp2.RequestHandler):
             url = users.create_logout_url(self.request.uri)
             url_linktext = '<i class="fa fa-sign-out"></i> Logout'
             dash_dict = {
-                "arlearn1@gmail.com": 
-                "https://app.redash.io/vlp/public/dashboards/GbWtTQj1Qq3bPcbF7uRkyjyJaJw7oVch7mrjetLd",
-                "arlearn2@gmail.com": 
-                "https://app.redash.io/vlp/public/dashboards/x6VQUeBzGMYkAOrsCWJQMnV5YznUaDSe60j1iUaO",
-                "arlearn3@gmail.com": 
-                "https://app.redash.io/vlp/public/dashboards/jJVZTcRhTg6ghe8VzN6yVJ7MGRsnVA6GS5c4Ws7y",
-                "arlearn4@gmail.com":
-                "https://app.redash.io/vlp/public/dashboards/mXmBzKZI9aaX59BcP6CUkcEzw8240KClW1YzQriH",
-                "arlearn5@gmail.com":
-                "https://app.redash.io/vlp/public/dashboards/FJam4N82TuWbmhZfGb1PO9urU6pnDVcEnX25Bl2P",
-                "arlearn6@gmail.com":
-                "https://app.redash.io/vlp/public/dashboards/rx0ndRAiw0j0rmdOpPICt9qnlFdKCsfYOA5PvSh9",
-                "arlearn7@gmail.com":
-                "https://app.redash.io/vlp/public/dashboards/1yYPV2HnIVa1XkZlY2vw17oHqqGCfXOl8eWPKSNQ",
-                "arlearn8@gmail.com":
-                "https://app.redash.io/vlp/public/dashboards/CHIGUpYP4DES2Pkf4iu473wkoR0VYWgmOwix4g1S",
-                "arlearn9@gmail.com":
-                "https://app.redash.io/vlp/public/dashboards/9Tnh409rFReFZPBBHbN5gZO6AVhYrnDeY9ixsKix",
-                # Test with my email
-                "dnldimitri@gmail.com": 
-                "https://app.redash.io/vlp/public/dashboards/9Tnh409rFReFZPBBHbN5gZO6AVhYrnDeY9ixsKix"
+                "xxx@xxxx": 
+                "https://app.redash.io/"
                 }
             url_dashboard = dash_dict[user.email()]
             template_values = {
